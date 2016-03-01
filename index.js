@@ -1,38 +1,66 @@
 var self = require("sdk/self");
-var ui = require("sdk/ui");
+var system = require("sdk/system")
 var base64 = require("sdk/base64");
 var tabs = require("sdk/tabs");
 var url = require("sdk/url");
 var notifications = require("sdk/notifications");
 var simplePrefs = require("sdk/simple-prefs");
 var passwords = require("sdk/passwords");
-var panel = require("sdk/panel");
 var timers = require("sdk/timers");
 
-var mainButton = ui.ToggleButton({
-  id: "owncloudPasswordButton",
-  label: "ownCloud Passwords",
-  icon: "./app_black.png",
-  onChange: handleMainButtonClick
-});
+var mobile = false;
+if (system.platform == "android") {
+  mobile = true;
+}
 
-var mainPanel = panel.Panel({
-  contentURL: self.data.url("main-panel.html"),
-  contentScriptFile: self.data.url("main-panel.js"),
-  onHide: handleHide
-});
+if (!mobile) {
+  var ui = require("sdk/ui");
+  var panel = require("sdk/panel");
 
-var settingsPanel = panel.Panel({
-  contentURL: self.data.url("settings-panel.html"),
-  contentScriptFile: self.data.url("settings-panel.js"),
-  onHide: handleHide
-});
+  var mainButton = ui.ToggleButton({
+    id: "owncloudPasswordButton",
+    label: "ownCloud Passwords",
+    icon: "./app_black.png",
+    onChange: handleMainButtonClick
+  });
 
-settingsPanel.port.on("saveSettings", saveSettingsPanel);
-settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
+  var mainPanel = panel.Panel({
+    contentURL: self.data.url("main-panel.html"),
+    contentScriptFile: self.data.url("main-panel.js"),
+    onHide: handleHide
+  });
+
+  var settingsPanel = panel.Panel({
+    contentURL: self.data.url("settings-panel.html"),
+    contentScriptFile: self.data.url("settings-panel.js"),
+    onHide: handleHide
+  });
+
+  settingsPanel.port.on("saveSettings", saveSettingsPanel);
+  settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
+  mainPanel.port.on("loginClicked", mainPanelLoginClicked);
+  mainPanel.port.on("settingsClicked", mainPanelSettingsClicked);
+  mainPanel.port.on("refreshClicked", mainPanelRefreshClicked);
+  mainPanel.port.on("resize", mainPanelResize);
+  mainPanel.on("show", function() {
+    mainPanel.port.emit("show");
+  });
+  settingsPanel.port.on("resize", settingsPanelResize);
+  settingsPanel.on("show", function() {
+    passwords.search({
+      url: self.uri,
+      onComplete: settingsPanelRefresh
+    });
+  });
+}
 
 function saveSettingsPanel(host, user, password, timer) {
-  settingsPanel.hide();
+  if (!mobile) {
+    settingsPanel.hide();
+  }
+  else {
+    tabs.activeTab.close();
+  }
   simplePrefs.prefs["databaseHost"] = host;
   simplePrefs.prefs["refreshTimer"] = parseInt(timer);
   passwords.search({
@@ -52,7 +80,12 @@ function saveSettingsPanel(host, user, password, timer) {
 }
 
 function cancelSettingsPanel() {
-  settingsPanel.hide();
+  if (!mobile) {
+    settingsPanel.hide();
+  }
+  else {
+    tabs.activeTab.close();
+  }
 }
 
 function handleHide() {
@@ -105,7 +138,9 @@ function fetchLoginList(databaseHost, databaseUser, databasePassword) {
       if (response.status == 200){
         loginList = response.json;
         processLoginList();
-        mainPanel.port.emit("refreshFinished");
+        if (!mobile) {
+          mainPanel.port.emit("refreshFinished");
+        }
       }
       else {
         notifications.notify({
@@ -122,6 +157,9 @@ var userList = [];
 var passwordList = [];
 
 function processLoginList() {
+  if (loginList == null) {
+    return
+  }
   try {
     var host = getHostFromURL(tabs.activeTab.url);
   }
@@ -141,12 +179,14 @@ function processLoginList() {
     }
     catch(err){}
   }
-  mainPanel.port.emit("updateLogins", userList, loginList.length);
-  if (hits > 0) {
-    mainButton.badge = hits;
-  }
-  else {
-    mainButton.badge = undefined;
+  if (!mobile) {
+    mainPanel.port.emit("updateLogins", userList, loginList.length);
+    if (hits > 0) {
+      mainButton.badge = hits;
+    }
+    else {
+      mainButton.badge = undefined;
+    }
   }
 }
 
@@ -170,8 +210,6 @@ function pageLoaded(tab) {
   }
 }
 
-mainPanel.port.on("loginClicked", mainPanelLoginClicked);
-
 function mainPanelLoginClicked(id) {
   var worker = tabs.activeTab.attach({
     contentScriptFile: self.data.url("fill-password.js")
@@ -179,42 +217,23 @@ function mainPanelLoginClicked(id) {
   worker.port.emit("fillPassword", userList[id], passwordList[id]);
 }
 
-mainPanel.port.on("settingsClicked", mainPanelSettingsClicked);
-
 function mainPanelSettingsClicked() {
   mainPanel.hide();
   mainButton.state("window", {checked: true})
   settingsPanel.show({position: mainButton});
 }
 
-mainPanel.port.on("refreshClicked", mainPanelRefreshClicked);
-
 function mainPanelRefreshClicked() {
   refreshLogins();
 }
-
-mainPanel.port.on("resize", mainPanelResize);
 
 function mainPanelResize(width, height) {
   mainPanel.resize(width, height);
 }
 
-mainPanel.on("show", function() {
-  mainPanel.port.emit("show");
-});
-
-settingsPanel.port.on("resize", settingsPanelResize);
-
 function settingsPanelResize(width, height) {
   settingsPanel.resize(width, height);
 }
-
-settingsPanel.on("show", function() {
-  passwords.search({
-    url: self.uri,
-    onComplete: settingsPanelRefresh
-  });
-});
 
 function settingsPanelRefresh(credentials) {
   var databaseHost = simplePrefs.prefs["databaseHost"];
@@ -225,7 +244,12 @@ function settingsPanelRefresh(credentials) {
     databaseUser = credentials[0].username;
     databasePassword = credentials[0].password;
   }
-  settingsPanel.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer);
+  if (!mobile) {
+    settingsPanel.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer);
+  }
+  else {
+    settingsPanelWorker.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer);
+  }
 }
 
 var refreshInterval = timers.setInterval(refreshLogins, simplePrefs.prefs["refreshTimer"]*1000);
@@ -238,3 +262,49 @@ function refreshLogins() {
 }
 
 refreshLogins();
+
+if (mobile) {
+  const { Services } = require("resource://gre/modules/Services.jsm");
+  var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
+  
+  var settingsPanelWorker = undefined;
+  
+  function attachWorker() {
+    settingsPanelWorker = tabs.activeTab.attach({
+      contentScriptFile: "./settings-panel.js"
+    });
+    passwords.search({
+      url: self.uri,
+      onComplete: settingsPanelRefresh
+    });
+    settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
+    settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
+  }
+  
+  function menuTapHandler() {
+    tabs.open({
+      url: "./settings-panel.html",
+      onReady: attachWorker
+    });
+  }
+  
+  function fillMenuTapped() {
+    mainPanelLoginClicked(0);
+  }
+  
+  var parentMenu = NativeWindow.menu.add({
+    name: "Passwords"
+  });
+  
+  var settingsMenu = NativeWindow.menu.add({
+    name: "Settings",
+    parent: parentMenu,
+    callback: menuTapHandler
+  });
+  
+  var fillMenu = NativeWindow.menu.add({
+    name: "Fill",
+    parent: parentMenu,
+    callback: fillMenuTapped
+  });
+}

@@ -1,13 +1,14 @@
 {
   "title": "Firefox + ownCloud Passwords",
   "name": "ff-oc-passwords",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A Firefox add-on to access passwords stored in an ownCloud.",
   "homepage": "https://github.com/eglia/ff-oc-passwords",
   "main": "index.js",
   "author": "Andreas Egli",
   "engines": {
-    "firefox": ">=30.0"
+    "firefox": ">=30.0",
+    "fennec": ">=30.0"
   },
   "license": "MIT",
   "keywords": [
