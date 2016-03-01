@@ -1,13 +1,13 @@
 {
   "title": "Firefox + ownCloud Passwords",
   "name": "ff-oc-passwords",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A Firefox add-on to access passwords stored in an ownCloud.",
+  "homepage": "https://github.com/eglia/ff-oc-passwords",
   "main": "index.js",
   "author": "Andreas Egli",
   "engines": {
-    "firefox": ">=30.0",
-    "fennec": ">=30.0"
+    "firefox": ">=30.0"
   },
   "license": "MIT",
   "keywords": [
@@ -17,6 +17,14 @@
     "name": "databaseHost",
     "title": "ownCloud URL",
     "type": "string",
-    "value": "https://example.org/owncloud"
+    "value": "https://example.org/owncloud",
+    "hidden": true
+  },
+  {
+    "name": "refreshTimer",
+    "title": "Refresh timer [s]",
+    "type": "integer",
+    "value": 60,
+    "hidden": true
   }]
 }

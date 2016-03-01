@@ -37,7 +37,7 @@ function getLoginFields() {
     if (parentForm) {
       var inputs = parentForm.getElementsByTagName('input');
       for (var i = 0; i < inputs.length; i++) {
-        if (inputs[i] !== curPswdField && inputs[i].type === 'text') {
+        if (inputs[i] !== curPswdField && (inputs[i].type === 'text' || inputs[i].type === 'email')) {
           fieldPairs[fieldPairs.length] = [inputs[i], curPswdField];
           break;
         }
