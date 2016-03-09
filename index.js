@@ -171,7 +171,10 @@ function processLoginList() {
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
     try {
-      if (host == getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])) {
+      var entryAddress = getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])
+      var entryWebsite = getHostFromURL(loginList[i]["website"])
+      console.log(entryAddress)
+      if (host == entryAddress || host == entryWebsite) {
         userList.push(JSON.parse("{" + loginList[i]["properties"] + "}")["loginname"]);
         passwordList.push(loginList[i]["pass"]);
         hits = hits + 1;
@@ -192,7 +195,7 @@ function processLoginList() {
 
 function getHostFromURL(URL) {
   try {
-    var splittedURL = URL.split('.');
+    var splittedURL = url.URL(URL).host.split('.');
     var TLD = url.getTLD(URL);
     var baseHost = splittedURL[splittedURL.length - 2] + '.' + TLD;
     if (TLD == null) {
