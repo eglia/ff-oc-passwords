@@ -217,6 +217,7 @@ function getHostFromURL(URL) {
 }
 
 tabs.on("ready", pageLoaded);
+tabs.on("activate", pageLoaded);
 
 var lastHost = "";
 function pageLoaded(tab) {
