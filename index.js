@@ -137,6 +137,13 @@ function fetchLoginList(databaseHost, databaseUser, databasePassword) {
     onComplete: function (response) {
       if (response.status == 200){
         loginList = response.json;
+        var tempLoginList = [];
+        for (var i=0; i<loginList.length; i++) {
+          if (loginList[i]['deleted'] == '0') {
+            tempLoginList.push(loginList[i]);
+          }
+        }
+        loginList = tempLoginList;
         processLoginList();
         if (!mobile) {
           mainPanel.port.emit("refreshFinished");
