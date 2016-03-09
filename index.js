@@ -173,7 +173,6 @@ function processLoginList() {
     try {
       var entryAddress = getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])
       var entryWebsite = getHostFromURL(loginList[i]["website"])
-      console.log(entryAddress)
       if (host == entryAddress || host == entryWebsite) {
         userList.push(JSON.parse("{" + loginList[i]["properties"] + "}")["loginname"]);
         passwordList.push(loginList[i]["pass"]);
