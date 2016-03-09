@@ -5,6 +5,8 @@
 A Firefox add-on to access passwords stored in an ownCloud.
 Requires the [ownCloud Passwords](https://github.com/fcturner/passwords) app.
 
+The latest packaged release is available from [Mozilla Addons](https://addons.mozilla.org/en-US/firefox/addon/firefox-owncloud-passwords)
+
 ##Security
 All data exchange with the ownCloud instance is done via the API.
 **It is strongly recommended to only use SSL encrypted connections, otherwise all passwords will be transmitted in cleartext!**
