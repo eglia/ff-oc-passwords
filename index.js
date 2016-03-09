@@ -192,7 +192,15 @@ function processLoginList() {
 
 function getHostFromURL(URL) {
   try {
-    return url.URL(URL).host.replace(/^www\./,"")
+    var splittedURL = URL.split('.');
+    var TLD = url.getTLD(URL);
+    var baseHost = splittedURL[splittedURL.length - 2] + '.' + TLD;
+    if (TLD == null) {
+      return URL;
+    }
+    else {
+      return baseHost
+    }
   }
   catch(err) {
     return URL
