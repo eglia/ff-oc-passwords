@@ -1,6 +1,8 @@
 ## Changelog
 ### 0.2.8 (Unreleased)
 - Correctly update logins on tab change
+- Added refresh button to mobile interface
+- Added support for multiple logins per page on mobile
 
 ### 0.2.7
 - Filter out passwords in the trash bin 

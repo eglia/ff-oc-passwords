@@ -197,6 +197,9 @@ function processLoginList() {
       mainButton.badge = undefined;
     }
   }
+  if (mobile) {
+    populateFillMenu();
+  }
 }
 
 function getHostFromURL(URL) {
@@ -282,7 +285,7 @@ function refreshLogins() {
 refreshLogins();
 
 if (mobile) {
-  const { Services } = require("resource://gre/modules/Services.jsm");
+  var Services = require("resource://gre/modules/Services.jsm").Services;
   var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
   
   var settingsPanelWorker = undefined;
@@ -305,9 +308,9 @@ if (mobile) {
       onReady: attachWorker
     });
   }
-  
-  function fillMenuTapped() {
-    mainPanelLoginClicked(0);
+
+  function fillMenuTapped(elem) {
+    mainPanelLoginClicked(elem);
   }
   
   var parentMenu = NativeWindow.menu.add({
@@ -319,10 +322,32 @@ if (mobile) {
     parent: parentMenu,
     callback: menuTapHandler
   });
+
+  var fillMenuElements = [];
+
+  function populateFillMenu() {
+    for (var i=0; i<fillMenuElements.length; i++) {
+      NativeWindow.menu.remove(fillMenuElements[i]);
+    }
+    fillMenuElements = [];
+    for (var i=0; i<userList.length; i++) {
+      fillMenuElements[i] = NativeWindow.menu.add({
+        name: userList[i],
+        parent: parentMenu,
+        // and now for some weird javascript magic (closures):
+        callback: function() {
+           var tmp = i;
+           return function() {
+             fillMenuTapped(tmp);
+           }
+        }()
+      });
+    }
+  }
   
-  var fillMenu = NativeWindow.menu.add({
-    name: "Fill",
+  var refreshMenu = NativeWindow.menu.add({
+    name: "Refresh",
     parent: parentMenu,
-    callback: fillMenuTapped
+    callback: refreshLogins
   });
 }
