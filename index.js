@@ -167,26 +167,18 @@ function processLoginList() {
   if (loginList == null) {
     return
   }
-  try {
-    var host = getHostFromURL(tabs.activeTab.url);
-  }
-  catch(err) {
-    host = tabs.activeTab.url;
-  }
+  var host = getHostFromURL(tabs.activeTab.url);
   userList = [];
   passwordList = [];
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
-    try {
-      var entryAddress = getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])
-      var entryWebsite = getHostFromURL(loginList[i]["website"])
-      if (host == entryAddress || host == entryWebsite) {
-        userList.push(JSON.parse("{" + loginList[i]["properties"] + "}")["loginname"]);
-        passwordList.push(loginList[i]["pass"]);
-        hits = hits + 1;
-      }
+    var entryAddress = getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])
+    var entryWebsite = getHostFromURL(loginList[i]["website"])
+    if (host == entryAddress || host == entryWebsite) {
+      userList.push(JSON.parse("{" + loginList[i]["properties"] + "}")["loginname"]);
+      passwordList.push(loginList[i]["pass"]);
+      hits = hits + 1;
     }
-    catch(err){}
   }
   if (!mobile) {
     mainPanel.port.emit("updateLogins", userList, loginList.length);
@@ -203,19 +195,41 @@ function processLoginList() {
 }
 
 function getHostFromURL(URL) {
+  var enhancedURL = URL;
   try {
-    var splittedURL = url.URL(URL).host.split('.');
-    var TLD = url.getTLD(URL);
-    var baseHost = splittedURL[splittedURL.length - 2] + '.' + TLD;
-    if (TLD == null) {
-      return URL;
-    }
-    else {
-      return baseHost
-    }
+    var URLobj = url.URL(URL);
   }
   catch(err) {
-    return URL
+    try {
+      enhancedURL = "http://" + URL;
+      var URLobj = url.URL(enhancedURL);
+    }
+    catch(err2) {
+      return URL;
+    }
+  }
+  try {
+    var splittedURL = URLobj.host.split('.');
+    if (splittedURL.length == 4) {
+      var valid = true;
+      for (var i=0; i<splittedURL.length; i++) {
+        if (isNaN(splittedURL[i]) || splittedURL[i] < 0 || splittedURL[i] > 255) {
+          valid = false;
+        }
+      }
+      if (valid) {
+        return URLobj.host;
+      }
+    }
+    var TLD = url.getTLD(enhancedURL);
+    var baseHost = splittedURL[splittedURL.length - 2];
+    if (TLD == null || baseHost == undefined) {
+      return URL;
+    }
+    return baseHost + '.' + TLD;
+  }
+  catch(err) {
+    return URL;
   }
 }
 

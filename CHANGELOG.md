@@ -3,6 +3,7 @@
 - Correctly update logins on tab change
 - Added refresh button to mobile interface
 - Added support for multiple logins per page on mobile
+- Improved host parsing
 
 ### 0.2.7
 - Filter out passwords in the trash bin 
