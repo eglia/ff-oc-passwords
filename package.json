@@ -1,7 +1,7 @@
 {
   "title": "ownCloud Passwords",
   "name": "ff-oc-passwords",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "A Firefox add-on to access passwords stored in an ownCloud.",
   "homepage": "https://github.com/eglia/ff-oc-passwords",
   "main": "index.js",
@@ -11,9 +11,6 @@
     "fennec": ">=30.0"
   },
   "license": "MIT",
-  "keywords": [
-    "jetpack"
-  ],
   "preferences": [{
     "name": "databaseHost",
     "title": "ownCloud URL",

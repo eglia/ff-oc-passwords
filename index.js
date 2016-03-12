@@ -172,10 +172,12 @@ function processLoginList() {
   passwordList = [];
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = getHostFromURL(JSON.parse("{" + loginList[i]["properties"] + "}")["address"])
+    var entryProperties = "{" + loginList[i]["properties"] + "}";
+    entryProperties = JSON.stringify(entryProperties);
+    var entryAddress = getHostFromURL(JSON.parse(entryProperties)["address"])
     var entryWebsite = getHostFromURL(loginList[i]["website"])
     if (host == entryAddress || host == entryWebsite) {
-      userList.push(JSON.parse("{" + loginList[i]["properties"] + "}")["loginname"]);
+      userList.push(JSON.parse(entryProperties)["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
     }
