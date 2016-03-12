@@ -1,4 +1,7 @@
 ## Changelog
+### 0.2.9
+- Fixed character escape ([#3](https://github.com/eglia/ff-oc-passwords/issues/3))
+
 ### 0.2.8
 - Correctly update logins on tab change
 - Added refresh button to mobile interface
