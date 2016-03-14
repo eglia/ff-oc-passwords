@@ -160,6 +160,40 @@ function fetchLoginList(databaseHost, databaseUser, databasePassword) {
   passwordRequest.get();
 }
 
+function escapeJSON(text) {
+  var quoteCounter = 0;
+  var quotePosition = [];
+  var returnText = text;
+  returnText = returnText.replace(/\n/g, "\\n");
+  for (var i=0; i<returnText.length; i++) {
+    if (returnText[i] == "\"") {
+      quoteCounter = quoteCounter + 1;
+      quotePosition.push(i);
+    }
+    else if (returnText[i] == ":" || returnText[i] == ",") {
+      if (quoteCounter != 2) {
+        quotePosition.splice(-1-quoteCounter, 1);
+        quotePosition.splice(-1, 1);
+      }
+      else {
+        quotePosition = quotePosition.slice(0, -2)
+      }
+      quoteCounter = 0;
+    }
+  }
+  if (quoteCounter != 2) {
+    quotePosition.splice(-1-quoteCounter, 1);
+    quotePosition.splice(-1, 1);
+  }
+  else {
+    quotePosition = quotePosition.slice(0, -2)
+  }
+  for (var i=0; i<quotePosition.length; i++) {
+    returnText = returnText.substr(0, quotePosition[i]+i) + "\\\"" + returnText.substr(quotePosition[i]+i+1);
+  }
+  return returnText;
+}
+
 var userList = [];
 var passwordList = [];
 
@@ -173,11 +207,12 @@ function processLoginList() {
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
     var entryProperties = "{" + loginList[i]["properties"] + "}";
-    entryProperties = JSON.stringify(entryProperties);
-    var entryAddress = getHostFromURL(JSON.parse(entryProperties)["address"])
+    entryProperties = escapeJSON(entryProperties);
+    entryProperties = JSON.parse(entryProperties);
+    var entryAddress = getHostFromURL(entryProperties["address"])
     var entryWebsite = getHostFromURL(loginList[i]["website"])
     if (host == entryAddress || host == entryWebsite) {
-      userList.push(JSON.parse(entryProperties)["loginname"]);
+      userList.push(entryProperties["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
     }

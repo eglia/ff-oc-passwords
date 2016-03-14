@@ -1,4 +1,7 @@
 ## Changelog
+### 0.2.10
+- Fixed regression introduced in 0.2.9 which caused the addon to break
+
 ### 0.2.9
 - Fixed character escape ([#3](https://github.com/eglia/ff-oc-passwords/issues/3))
 
