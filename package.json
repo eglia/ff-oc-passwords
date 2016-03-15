@@ -22,7 +22,7 @@
     "name": "refreshTimer",
     "title": "Refresh timer [s]",
     "type": "integer",
-    "value": 60,
+    "value": 600,
     "hidden": true
   }]
 }
