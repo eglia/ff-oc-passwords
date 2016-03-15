@@ -134,6 +134,7 @@ function fetchLoginList(databaseHost, databaseUser, databasePassword) {
   var passwordRequest = Request({
     url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords",
     headers: {"Authorization": "Basic " + encodedData},
+    anonymous: true,
     onComplete: function (response) {
       if (response.status == 200){
         loginList = response.json;
