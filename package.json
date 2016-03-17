@@ -7,8 +7,8 @@
   "main": "index.js",
   "author": "Andreas Egli",
   "engines": {
-    "firefox": ">=38.0",
-    "fennec": ">=38.0"
+    "firefox": ">=36.0 <=*",
+    "fennec": ">=36.0 <=*"
   },
   "license": "MIT",
   "preferences": [{
