@@ -1,13 +1,19 @@
 <html>
 <head>
+<style>
+  table.equalDivide td { width:50%; }
+</style>
 </head>
 <body>
   <h4 align="center">Please enter your ownCloud credentials:</h4>
   <form>
-    <table align="center">
+    <table align="center" class="equalDivide">
       <tr>
         <td><small>Host:</small></td>
         <td><input type="text" id="host"></td>
+      </tr>
+      <tr style="display:none;" id="hostWarning">
+        <td colspan=2><font color="red" size=-1>Warning: This connection will be unencrypted and expose all your passwords on the network!</font></td>
       </tr>
       <tr>
         <td><small>Username:</small></td>
@@ -16,6 +22,13 @@
       <tr>
         <td><small>Password:</small></td>
         <td><input type="password" id="password"></td>
+      </tr>
+      <tr>
+        <td><small>Remember Login</small></td>
+        <td><input type="checkbox" id="remember"></td>
+      </tr>
+      <tr style="display:none;" id="rememberWarning">
+        <td colspan=2><font color="red" size=-1>Warning: This will save your credentials locally. To ensure safety, set a master password in the firefox settings!</font></td>
       </tr>
       <tr>
         <td><small>Refresh timer [s]:</small></td>

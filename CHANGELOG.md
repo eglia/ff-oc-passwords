@@ -1,6 +1,9 @@
 ## Changelog
 ### 0.2.12 (Unreleased)
 - Correctly set Firefox version requirement to 36
+- Added option to not store owncloud password
+- Added warning when storing password
+- Added warning when not using SSL
 
 ### 0.2.11
 - Fixed token expired error ([#4](https://github.com/eglia/ff-oc-passwords/issues/4))

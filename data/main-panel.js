@@ -40,7 +40,6 @@ function updateLogins(logins, numTotalLogins) {
     var createClickHandler = 
       function(clickedLogin) {
         return function() { 
-          //console.log("id:" + clickedLogin.id);
           self.port.emit("loginClicked", clickedLogin.id);
       };
     };
