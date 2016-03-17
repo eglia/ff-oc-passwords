@@ -1,4 +1,7 @@
 ## Changelog
+### 0.2.12 (Unreleased)
+- Correctly set Firefox version requirement to 36
+
 ### 0.2.11
 - Fixed token expired error ([#4](https://github.com/eglia/ff-oc-passwords/issues/4))
 
