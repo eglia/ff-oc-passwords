@@ -7,6 +7,7 @@ var notifications = require("sdk/notifications");
 var simplePrefs = require("sdk/simple-prefs");
 var passwords = require("sdk/passwords");
 var timers = require("sdk/timers");
+var pageMod = require("sdk/page-mod");
 
 var databaseHost = null;
 var databaseUser = null;
@@ -17,6 +18,14 @@ var passwordList = [];
 var lastHost = "";
 var mobile = system.platform == "android";
 var refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
+
+pageMod.PageMod({
+  include: "*",
+  contentScriptFile: "./mine-password.js",
+  onAttach: function(worker) {
+    worker.port.on("passwordMined", passwordMined);
+  }
+});
 
 tabs.on("ready", pageLoaded);
 tabs.on("activate", pageLoaded);
@@ -119,7 +128,6 @@ if (mobile) {
       fillMenuElements[i] = NativeWindow.menu.add({
         name: userList[i],
         parent: parentMenu,
-        // and now for some weird javascript magic (closures):
         callback: function() {
            var tmp = i;
            return function() {
@@ -129,6 +137,9 @@ if (mobile) {
       });
     }
   }
+}
+
+function passwordMined(url, user, password) {
 }
 
 function saveSettingsPanel(host, user, password, timer, remember) {
