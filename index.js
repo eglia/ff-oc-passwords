@@ -29,6 +29,9 @@ pageMod.PageMod({
 
 tabs.on("ready", pageLoaded);
 tabs.on("activate", pageLoaded);
+tabs.on("deactivate", pageLoaded);
+tabs.on("open", pageLoaded);
+
 passwords.search({
   url: self.uri,
   onComplete: processCredentials
