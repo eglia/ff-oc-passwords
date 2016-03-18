@@ -242,6 +242,7 @@ function fetchLoginList() {
           title: "Failed to get passwords",
           text: "Could not get passwords from the server :/"
         });
+        console.error(response.status, response.json);
       }
     }
   });
