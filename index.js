@@ -194,9 +194,23 @@ function passwordMined(url, user, password) {
   minedURL = url;
   minedUser = user;
   minedPassword = password;
-  mainButton.state("window", {checked: true});
-  addPanel.show({position: mainButton});
-  addPanel.port.emit("show", title, user);
+  if (!mobile) {
+    mainButton.state("window", {checked: true});
+    addPanel.show({position: mainButton});
+    addPanel.port.emit("show", title, user);
+  }
+  else {
+    var buttons = [{
+        "label": "Save",
+        "callback": saveLogin,
+        "positive": true
+      },{
+        "label": "Cancel",
+        "callback": cancelLogin,
+        "positive": false
+      }];
+    NativeWindow.doorhanger.show(title + " " + user + "<br>Save to database?", "saveDialog", buttons, tabs.activeTab.id);
+  }
 }
 
 function saveLogin() {
