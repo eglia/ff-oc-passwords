@@ -8,6 +8,7 @@ var simplePrefs = require("sdk/simple-prefs");
 var passwords = require("sdk/passwords");
 var timers = require("sdk/timers");
 var pageMod = require("sdk/page-mod");
+var request = require("sdk/request");
 
 var databaseHost = null;
 var databaseUser = null;
@@ -15,9 +16,12 @@ var databasePassword = null;
 var loginList = null;
 var userList = [];
 var passwordList = [];
-var lastHost = "";
 var mobile = system.platform == "android";
 var refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
+var minedURL = null;
+var minedUser = null;
+var minedPassword = null;
+var minedMatchingID = null;
 
 pageMod.PageMod({
   include: "*",
@@ -27,10 +31,10 @@ pageMod.PageMod({
   }
 });
 
-tabs.on("ready", pageLoaded);
-tabs.on("activate", pageLoaded);
-tabs.on("deactivate", pageLoaded);
-tabs.on("open", pageLoaded);
+tabs.on("ready", processLoginList);
+tabs.on("activate", processLoginList);
+tabs.on("deactivate", processLoginList);
+tabs.on("open", processLoginList);
 
 passwords.search({
   url: self.uri,
@@ -60,6 +64,12 @@ if (!mobile) {
     onHide: handleHide
   });
 
+  var addPanel = panel.Panel({
+    contentURL: self.data.url("add-panel.html"),
+    contentScriptFile: self.data.url("add-panel.js"),
+    onHide: handleHide
+  });
+
   settingsPanel.port.on("saveSettings", saveSettingsPanel);
   settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
   mainPanel.port.on("loginClicked", mainPanelLoginClicked);
@@ -76,6 +86,9 @@ if (!mobile) {
       onComplete: settingsPanelRefresh
     });
   });
+  addPanel.port.on("resize", addPanelResize);
+  addPanel.port.on("saveLogin", saveLogin);
+  addPanel.port.on("cancelLogin", cancelLogin);
 }
 
 if (mobile) {
@@ -143,6 +156,87 @@ if (mobile) {
 }
 
 function passwordMined(url, user, password) {
+  if (loginList == null) {
+    return
+  }
+  var host = getHostFromURL(url);
+  var userList = [];
+  var passwordList = [];
+  var idList = [];
+  var hits = 0;
+  var title = "";
+  for (var i=0; i<loginList.length; i++) {
+    var entryProperties = "{" + loginList[i]["properties"] + "}";
+    entryProperties = escapeJSON(entryProperties);
+    entryProperties = JSON.parse(entryProperties);
+    var entryAddress = getHostFromURL(entryProperties["address"])
+    var entryWebsite = getHostFromURL(loginList[i]["website"])
+    if (host == entryAddress || host == entryWebsite) {
+      userList.push(entryProperties["loginname"]);
+      passwordList.push(loginList[i]["pass"]);
+      idList.push(loginList[i]["id"]);
+      hits = hits + 1;
+    }
+  }
+  minedMatchingID = -1;
+  title = "Detected new login:";
+  for (var i=0; i<userList.length; i++) {
+    if (userList[i] == user) {
+      if (passwordList[i] != password) {
+        minedMatchingID = idList[i];
+        title = "Detected changed password for user:";
+      }
+      else {
+        return;
+      }
+    }
+  }
+  minedURL = url;
+  minedUser = user;
+  minedPassword = password;
+  mainButton.state("window", {checked: true});
+  addPanel.show({position: mainButton});
+  addPanel.port.emit("show", title, user);
+}
+
+function saveLogin() {
+  if (!mobile) {
+    addPanel.hide();
+  }
+  if (minedMatchingID == -1) {
+    var encodedData = base64.encode(databaseUser + ":" + databasePassword);
+    request.Request({
+      url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords",
+      headers: {"Authorization": "Basic " + encodedData},
+      anonymous: true,
+      content: {"website": getHostFromURL(minedURL),
+                "pass": minedPassword,
+                "properties": "\"loginname\": \"" + minedUser + "\", " +
+                              "\"address\": \"" + minedURL + "\", " +
+                              "\"notes\": \"\""},
+      onComplete: fetchLoginList
+    }).post();
+  }
+  else {
+    var encodedData = base64.encode(databaseUser + ":" + databasePassword);
+    request.Request({
+      url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID,
+      headers: {"Authorization": "Basic " + encodedData},
+      anonymous: true,
+      content: {"website": getHostFromURL(minedURL),
+                "pass": minedPassword,
+                "properties": "\"loginname\": \"" + minedUser + "\", " +
+                              "\"address\": \"" + minedURL + "\", " +
+                              "\"notes\": \"\""},
+      onComplete: fetchLoginList
+    }).put();
+  }
+}
+
+function cancelLogin() {
+  if (!mobile) {
+    addPanel.hide();
+  }
 }
 
 function saveSettingsPanel(host, user, password, timer, remember) {
@@ -217,8 +311,7 @@ function fetchLoginList() {
     return;
   }
   var encodedData = base64.encode(databaseUser + ":" + databasePassword);
-  var Request = require("sdk/request").Request;
-  var passwordRequest = Request({
+  var passwordRequest = request.Request({
     url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords",
     headers: {"Authorization": "Basic " + encodedData},
     anonymous: true,
@@ -284,7 +377,7 @@ function escapeJSON(text) {
 }
 
 function processLoginList() {
-  if (loginList == null) {
+  if (loginList == null || tabs.activeTab == null) {
     return
   }
   var host = getHostFromURL(tabs.activeTab.url);
@@ -356,15 +449,6 @@ function getHostFromURL(URL) {
   }
 }
 
-
-function pageLoaded(tab) {
-  var newHost = getHostFromURL(tab.url);
-  if (lastHost != newHost) {
-    processLoginList();
-    lastHost = newHost;
-  }
-}
-
 function mainPanelLoginClicked(id) {
   var worker = tabs.activeTab.attach({
     contentScriptFile: self.data.url("fill-password.js")
@@ -388,6 +472,10 @@ function mainPanelResize(width, height) {
 
 function settingsPanelResize(width, height) {
   settingsPanel.resize(width, height);
+}
+
+function addPanelResize(width, height) {
+  addPanel.resize(width, height);
 }
 
 function settingsPanelRefresh(credentials) {
