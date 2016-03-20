@@ -361,6 +361,10 @@ function escapeJSON(text) {
   var quotePosition = [];
   var returnText = text;
   returnText = returnText.replace(/\n/g, "\\n");
+  returnText = returnText.replace(/\r/g, "\\r");
+  returnText = returnText.replace(/\t/g, "\\t");
+  returnText = returnText.replace(/\b/g, "\\b");
+  returnText = returnText.replace(/\f/g, "\\f");
   returnText = returnText.replace(/\'/g, "\"");
   returnText = returnText.replace(/'/g, "\"");
   for (var i=0; i<returnText.length; i++) {

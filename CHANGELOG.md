@@ -6,7 +6,7 @@
 - Added warning when not using SSL
 - Improved tab change detection
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
-- Fix for API data containing single quotes ([#1](https://github.com/eglia/ff-oc-passwords/issues/1))
+- Fix for API data containing special characters ([#1](https://github.com/eglia/ff-oc-passwords/issues/1))
 - Fix for multiple login forms on a single page
 
 ### 0.2.11
