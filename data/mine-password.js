@@ -22,13 +22,13 @@ function getLoginFields() {
     };
   while (pswdLength--) {
     var curPswdField = pswd[pswdLength],
-      parentForm = parentForm(curPswdField),
+      thisParentForm = parentForm(curPswdField),
       curField = curPswdField;
-    if (parentForm) {
-      var inputs = parentForm.getElementsByTagName('input');
+    if (thisParentForm) {
+      var inputs = thisParentForm.getElementsByTagName('input');
       for (var i = 0; i < inputs.length; i++) {
         if (inputs[i] !== curPswdField && (inputs[i].type === 'text' || inputs[i].type === 'email')) {
-          forms[forms.length] = [parentForm, inputs[i], curPswdField];
+          forms[forms.length] = [thisParentForm, inputs[i], curPswdField];
           break;
         }
       }
