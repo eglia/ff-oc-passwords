@@ -363,7 +363,6 @@ function escapeJSON(text) {
   returnText = returnText.replace(/\n/g, "\\n");
   returnText = returnText.replace(/\r/g, "\\r");
   returnText = returnText.replace(/\t/g, "\\t");
-  returnText = returnText.replace(/\b/g, "\\b");
   returnText = returnText.replace(/\f/g, "\\f");
   returnText = returnText.replace(/\'/g, "\"");
   returnText = returnText.replace(/'/g, "\"");
