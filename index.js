@@ -361,6 +361,8 @@ function escapeJSON(text) {
   var quotePosition = [];
   var returnText = text;
   returnText = returnText.replace(/\n/g, "\\n");
+  returnText = returnText.replace(/\'/g, "\"");
+  returnText = returnText.replace(/'/g, "\"");
   for (var i=0; i<returnText.length; i++) {
     if (returnText[i] == "\"") {
       quoteCounter = quoteCounter + 1;
