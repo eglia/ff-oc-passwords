@@ -32,10 +32,10 @@ function getLoginFields() {
     };
   while (pswdLength--) {
     var curPswdField = pswd[pswdLength],
-      parentForm = parentForm(curPswdField),
+      thisParentForm = parentForm(curPswdField),
       curField = curPswdField;
-    if (parentForm) {
-      var inputs = parentForm.getElementsByTagName('input');
+    if (thisParentForm) {
+      var inputs = thisParentForm.getElementsByTagName('input');
       for (var i = 0; i < inputs.length; i++) {
         if (inputs[i] !== curPswdField && (inputs[i].type === 'text' || inputs[i].type === 'email')) {
           fieldPairs[fieldPairs.length] = [inputs[i], curPswdField];
