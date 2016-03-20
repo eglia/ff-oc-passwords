@@ -26,6 +26,7 @@ var minedMatchingID = null;
 pageMod.PageMod({
   include: "*",
   contentScriptFile: "./mine-password.js",
+  contentScriptWhen: "ready",
   onAttach: function(worker) {
     worker.port.on("passwordMined", passwordMined);
   }
