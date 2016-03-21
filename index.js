@@ -398,6 +398,9 @@ function saveSettingsPanel(host, user, password, timer, remember) {
   else {
     tabs.activeTab.close();
   }
+  if (host.slice(-1) == "/") {
+    host = host.slice(0, -1);
+  }
   simplePrefs.prefs["databaseHost"] = host;
   simplePrefs.prefs["refreshTimer"] = parseInt(timer);
   passwords.search({
