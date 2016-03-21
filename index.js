@@ -29,7 +29,7 @@ pageMod.PageMod({
   contentScriptFile: "./mine-password.js",
   contentScriptWhen: "ready",
   onAttach: function(worker) {
-    worker.port.on("passwordMined", passwordMined);
+    //worker.port.on("passwordMined", passwordMined);
   }
 });
 
@@ -547,7 +547,13 @@ function processLoginList() {
   for (var i=0; i<loginList.length; i++) {
     var entryProperties = "{" + loginList[i]["properties"] + "}";
     entryProperties = escapeJSON(entryProperties);
-    entryProperties = JSON.parse(entryProperties);
+    try {
+      entryProperties = JSON.parse(entryProperties);
+    }
+    catch(err) {
+      console.error(entryProperties);
+      console.exception(err);
+    }
     var entryAddress = getHostFromURL(entryProperties["address"])
     var entryWebsite = getHostFromURL(loginList[i]["website"])
     if (host == entryAddress || host == entryWebsite) {
