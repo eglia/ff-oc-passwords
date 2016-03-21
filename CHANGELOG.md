@@ -1,5 +1,5 @@
 ## Changelog
-### 0.3.0
+### HEAD
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
 
 ### 0.2.12

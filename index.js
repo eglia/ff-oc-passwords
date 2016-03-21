@@ -29,7 +29,7 @@ pageMod.PageMod({
   contentScriptFile: "./mine-password.js",
   contentScriptWhen: "ready",
   onAttach: function(worker) {
-    //worker.port.on("passwordMined", passwordMined);
+    worker.port.on("passwordMined", passwordMined);
   }
 });
 
@@ -293,19 +293,14 @@ function passwordMined(url, user, password) {
   var userList = [];
   var passwordList = [];
   var idList = [];
-  var hits = 0;
   var title = "";
   for (var i=0; i<loginList.length; i++) {
-    var entryProperties = "{" + loginList[i]["properties"] + "}";
-    entryProperties = escapeJSON(entryProperties);
-    entryProperties = JSON.parse(entryProperties);
-    var entryAddress = getHostFromURL(entryProperties["address"])
+    var entryAddress = getHostFromURL(loginList[i]["properties"]["address"])
     var entryWebsite = getHostFromURL(loginList[i]["website"])
     if (host == entryAddress || host == entryWebsite) {
-      userList.push(entryProperties["loginname"]);
+      userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       idList.push(loginList[i]["id"]);
-      hits = hits + 1;
     }
   }
   minedMatchingID = -1;
@@ -347,42 +342,87 @@ function saveLogin() {
   if (!mobile) {
     addPanel.hide();
   }
+  var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
+  if (minedMatchingID == -1) {
+    var d = new Date();
+    // date as YYYY-MM-DD
+    var changedDate = d.getFullYear()
+      + "-" + ('0' + (d.getMonth() + 1)).slice(-2)
+      + "-" + ('0' + d.getDate()).slice(-2);
+    var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
+    var data = {
+      "website": getHostFromURL(minedURL),
+      "pass": minedPassword,
+      "properties":
+        "\"loginname\": \"" + minedUser + "\", " +
+        "\"address\": \"" + minedURL + "\", " +
+        "\"strength\": \"" + strength_func(minedPassword) + "\", " +
+        "\"length\": \"" + minedPassword.length + "\", " +
+        "\"lower\": \"" + ~~strHasLower(minedPassword) + "\", " +
+        "\"upper\": \"" + ~~strHasUpper(minedPassword) + "\", " +
+        "\"number\": \"" + ~~strHasNumber(minedPassword) + "\", " +
+        "\"special\": \"" + ~~strHasSpecial(minedPassword) + "\", " +
+        "\"category\": \"0\", " +
+        "\"datechanged\": \"" + changedDate + "\"" +
+        "\"notes\": \"\"",
+      "deleted": "0"
+    };
+    apiRequest.addEventListener("load", fetchLoginList);
+    apiRequest.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
+    apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
+    apiRequest.setRequestHeader("Content-Type", "application/json");
+    apiRequest.send(JSON.stringify(data));
+  }
+  else {
+    var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
+    apiRequest.addEventListener("load", function() {
+      replaceLogin(JSON.parse(apiRequest.response));
+    });
+    apiRequest.open("GET", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
+    apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
+    apiRequest.setRequestHeader("Content-Type", "application/json");
+    apiRequest.send();
+  }
+}
+
+function replaceLogin(response) {
+  var data = JSONtoObject(response);
   var d = new Date();
   // date as YYYY-MM-DD
   var changedDate = d.getFullYear()
     + "-" + ('0' + (d.getMonth() + 1)).slice(-2)
     + "-" + ('0' + d.getDate()).slice(-2);
+  var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
 
-  var data = {
+  var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
+  apiRequest.open("PATCH", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
+  apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
+  apiRequest.setRequestHeader("Content-Type", "application/json");
+  apiRequest.send(JSON.stringify({"deleted": "1"}));
+
+  var apiRequest2 = new xhr.XMLHttpRequest({"mozAnon": true});
+  var newData = {
+    "website": data["website"],
     "pass": minedPassword,
-    "properties": 
+    "properties":
+      "\"loginname\": \"" + data["properties"]["loginname"] + "\", " +
+      "\"address\": \"" + data["properties"]["address"] + "\", " +
       "\"strength\": \"" + strength_func(minedPassword) + "\", " +
       "\"length\": \"" + minedPassword.length + "\", " +
       "\"lower\": \"" + ~~strHasLower(minedPassword) + "\", " +
       "\"upper\": \"" + ~~strHasUpper(minedPassword) + "\", " +
       "\"number\": \"" + ~~strHasNumber(minedPassword) + "\", " +
       "\"special\": \"" + ~~strHasSpecial(minedPassword) + "\", " +
-      "\"datechanged\": \"" + changedDate + "\"",
+      "\"category\": \"" + data["properties"]["category"] + "\", " +
+      "\"datechanged\": \"" + changedDate + "\", " +
+      "\"notes\": \"" + data["properties"]["notes"] + "\"",
     "deleted": "0"
   };
-  var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
-  var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
-  apiRequest.addEventListener("load", fetchLoginList);
-  if (minedMatchingID == -1) {
-    data["website"] = getHostFromURL(minedURL);
-    data["properties"] = data["properties"] + ", " +
-      "\"notes\": \"\", " +
-      "\"category\": \"0\", " +
-      "\"loginname\": \"" + minedUser + "\", " +
-      "\"address\": \"" + minedURL + "\"";
-    apiRequest.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
-  }
-  else {
-    apiRequest.open("PATCH", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
-  }
-  apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
-  apiRequest.setRequestHeader("Content-Type", "application/json");
-  apiRequest.send(JSON.stringify(data));
+  apiRequest2.addEventListener("load", fetchLoginList);
+  apiRequest2.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
+  apiRequest2.setRequestHeader("Authorization", "Basic " + encodedLogin);
+  apiRequest2.setRequestHeader("Content-Type", "application/json");
+  apiRequest2.send(JSON.stringify(newData));
 }
 
 function cancelLogin() {
@@ -475,8 +515,8 @@ function fetchLoginList() {
         loginList = response.json;
         var tempLoginList = [];
         for (var i=0; i<loginList.length; i++) {
-          if (loginList[i]['deleted'] == '0') {
-            tempLoginList.push(loginList[i]);
+          if (loginList[i]["deleted"] == "0") {
+            tempLoginList.push(JSONtoObject(loginList[i]));
           }
         }
         loginList = tempLoginList;
@@ -512,7 +552,12 @@ function escapeJSON(text) {
       quoteCounter = quoteCounter + 1;
       quotePosition.push(i);
     }
-    else if (returnText[i] == ":" || returnText[i] == ",") {
+    else if (returnText[i] == ":") {
+      if (quoteCounter == 1) {
+        continue;
+      }
+    }
+    if (returnText[i] == ":" || returnText[i] == ",") {
       if (quoteCounter != 2) {
         quotePosition.splice(-1-quoteCounter, 1);
         quotePosition.splice(-1, 1);
@@ -536,6 +581,22 @@ function escapeJSON(text) {
   return returnText;
 }
 
+function JSONtoObject(json) {
+  var object = json;
+  var properties = "{" + object["properties"] + "}";
+  properties = escapeJSON(properties);
+  try {
+    properties = JSON.parse(properties);
+  }
+  catch(err) {
+    console.error(json);
+    console.error(properties);
+    console.exception(err);
+  }
+  object["properties"] = properties;
+  return object;
+}
+
 function processLoginList() {
   if (loginList == null || tabs.activeTab == null) {
     return
@@ -545,19 +606,10 @@ function processLoginList() {
   passwordList = [];
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
-    var entryProperties = "{" + loginList[i]["properties"] + "}";
-    entryProperties = escapeJSON(entryProperties);
-    try {
-      entryProperties = JSON.parse(entryProperties);
-    }
-    catch(err) {
-      console.error(entryProperties);
-      console.exception(err);
-    }
-    var entryAddress = getHostFromURL(entryProperties["address"])
+    var entryAddress = getHostFromURL(loginList[i]["properties"]["address"])
     var entryWebsite = getHostFromURL(loginList[i]["website"])
     if (host == entryAddress || host == entryWebsite) {
-      userList.push(entryProperties["loginname"]);
+      userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
     }
