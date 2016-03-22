@@ -521,9 +521,6 @@ function fetchLoginList() {
         }
         loginList = tempLoginList;
         processLoginList();
-        if (!mobile) {
-          mainPanel.port.emit("refreshFinished");
-        }
       }
       else {
         notifications.notify({
@@ -531,6 +528,10 @@ function fetchLoginList() {
           text: "Could not get passwords from the server :/"
         });
         console.error(response.status, response.json);
+        
+      }
+      if (!mobile) {
+        mainPanel.port.emit("refreshFinished");
       }
     }
   });

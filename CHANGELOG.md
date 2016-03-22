@@ -2,6 +2,7 @@
 ### 0.3.0 (unreleased)
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
 - Fixed warnings not showing when opening settings panel
+- Fixed refresh button getting stuck
 - Improved JSON escape
 
 ### 0.2.12
