@@ -157,6 +157,11 @@ if (mobile) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////// START ///////////////////////////////////////////////////////
+// Temporarily borrowed from passwords app until https://github.com/fcturner/passwords/issues/145 is implemented. //
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 function strength_func(Password) {
   var charInStr;
   var strength_calc;
@@ -169,11 +174,8 @@ function strength_func(Password) {
   var hasSpecialChar3;
   var hasSpecialChar4;
   var charInt;
-
   passwordLength = Password.length;
-
   strength_calc = 0;
-
   // check length
   switch(true) {
     case passwordLength >= 8:
@@ -184,13 +186,10 @@ function strength_func(Password) {
       return 0;
       break;
   }
-
   // loop ONCE through password
-  for (var i = 1; i < passwordLength + 1; i++) {
-    
+  for (var i = 1; i < passwordLength + 1; i++) { 
     charInStr = Password.slice(i, i + 1);
     charInt = charInStr.charCodeAt(0);
-
     switch(true) {
       case charInt >= 97 && charInt <= 122:
         if (!hasLowerCase) {
@@ -235,36 +234,31 @@ function strength_func(Password) {
         }
         break;
     }
-
   }
-  
   strength_calc = strength_calc + (Math.floor(passwordLength / 8) * ((hasLowerCase ? 1 : 0) + (hasUpperCase ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecialChar1 ? 1 : 0) + (hasSpecialChar2 ? 1 : 0) + (hasSpecialChar3 ? 1 : 0) + (hasSpecialChar4 ? 1 : 0)));
-  
   var power = 6;
   strength_calc = strength_calc + Math.round(Math.pow(passwordLength, power) / Math.pow(10, power + 1));
-
   return strength_calc;
 }
 
 function strHasLower(str) {
   return str.toUpperCase() != str;
 }
+
 function strHasUpper(str) {
   return str.toLowerCase() != str;
 }
+
 function strHasNumber(str) {
   var regex = /\d/g;
   return regex.test(str);
 }
+
 function strHasSpecial(str) {
-
   var number;
-
   for (var i = 0; i < str.length; i++) {
-  
     number = 0;
     number = str.substring(i, i + 1).charCodeAt(0);
-
     switch(true) {
       case number === 33:
       case number >= 35 && number <= 36:
@@ -278,12 +272,14 @@ function strHasSpecial(str) {
         return true;
         break;
     }
-
   }
-
   // no special chars
   return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////// END ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function passwordMined(url, user, password) {
   if (loginList == null) {
@@ -499,7 +495,6 @@ function processCredentials(credentials) {
     fetchLoginList();
   }
 }
-
 
 function fetchLoginList() {
   if (databaseHost == null || databaseUser == null || databasePassword == null) {
