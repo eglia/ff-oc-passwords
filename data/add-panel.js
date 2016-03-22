@@ -17,7 +17,7 @@ function cancelLogin() {
 
 self.port.on("show", show);
 function show(title, user) {
-  textTitle.innerHTML = title;
-  textUser.innerHTML = user;
+  textTitle.textContent = title;
+  textUser.textContent = user;
   self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
 }
