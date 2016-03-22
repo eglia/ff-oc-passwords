@@ -4,6 +4,7 @@
 - Fixed warnings not showing when opening settings panel
 - Fixed refresh button getting stuck
 - Improved JSON escape
+- Added proper cleanup function
 
 ### 0.2.12
 - Added option to not store owncloud password

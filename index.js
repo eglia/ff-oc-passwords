@@ -23,8 +23,11 @@ var minedURL = null;
 var minedUser = null;
 var minedPassword = null;
 var minedMatchingID = null;
+var passwordMiner = null;
 
-pageMod.PageMod({
+exports.onUnload = cleanup;
+
+passwordMiner = pageMod.PageMod({
   include: "*",
   contentScriptFile: "./mine-password.js",
   contentScriptWhen: "ready",
@@ -155,6 +158,25 @@ if (mobile) {
       });
     }
   }
+}
+
+function cleanup(reason) {
+  if (!mobile) {
+    mainButton.destroy();
+    mainPanel.destroy();
+    settingsPanel.destroy();
+    addPanel.destroy();
+  }
+  else {
+    for (var i=0; i<fillMenuElements.length; i++) {
+      NativeWindow.menu.remove(fillMenuElements[i]);
+    }
+    NativeWindow.menu.remove(refreshMenu);
+    NativeWindow.menu.remove(settingsMenu);
+    NativeWindow.menu.remove(parentMenu);
+  }
+  timers.clearInterval(refreshInterval);
+  passwordMiner.destroy();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
