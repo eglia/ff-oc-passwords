@@ -53,9 +53,11 @@ function show(host, user, password, timer) {
   inputTimer.value = timer;
   if (password == "") {
     inputRemember.checked = false;
+    warningRemember.style.display = "none";
   }
   else {
     inputRemember.checked = true;
+    warningRemember.style.display = "table-row";
   }
-  self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
+  hostChanged();
 }

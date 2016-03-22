@@ -1,6 +1,7 @@
 ## Changelog
 ### HEAD
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
+- Fixed warnings not showing when opening settings panel
 
 ### 0.2.12
 - Added option to not store owncloud password
