@@ -363,7 +363,7 @@ function saveLogin() {
         "\"number\": \"" + ~~strHasNumber(minedPassword) + "\", " +
         "\"special\": \"" + ~~strHasSpecial(minedPassword) + "\", " +
         "\"category\": \"0\", " +
-        "\"datechanged\": \"" + changedDate + "\"" +
+        "\"datechanged\": \"" + changedDate + "\", " +
         "\"notes\": \"\"",
       "deleted": "0"
     };
@@ -538,46 +538,19 @@ function fetchLoginList() {
 }
 
 function escapeJSON(text) {
-  var quoteCounter = 0;
-  var quotePosition = [];
   var returnText = text;
   returnText = returnText.replace(/\n/g, "\\n");
   returnText = returnText.replace(/\r/g, "\\r");
   returnText = returnText.replace(/\t/g, "\\t");
   returnText = returnText.replace(/\f/g, "\\f");
   returnText = returnText.replace(/\'/g, "\"");
-  returnText = returnText.replace(/'/g, "\"");
-  for (var i=0; i<returnText.length; i++) {
-    if (returnText[i] == "\"") {
-      quoteCounter = quoteCounter + 1;
-      quotePosition.push(i);
-    }
-    else if (returnText[i] == ":") {
-      if (quoteCounter == 1) {
-        continue;
-      }
-    }
-    if (returnText[i] == ":" || returnText[i] == ",") {
-      if (quoteCounter != 2) {
-        quotePosition.splice(-1-quoteCounter, 1);
-        quotePosition.splice(-1, 1);
-      }
-      else {
-        quotePosition = quotePosition.slice(0, -2)
-      }
-      quoteCounter = 0;
-    }
-  }
-  if (quoteCounter != 2) {
-    quotePosition.splice(-1-quoteCounter, 1);
-    quotePosition.splice(-1, 1);
-  }
-  else {
-    quotePosition = quotePosition.slice(0, -2)
-  }
-  for (var i=0; i<quotePosition.length; i++) {
-    returnText = returnText.substr(0, quotePosition[i]+i) + "\\\"" + returnText.substr(quotePosition[i]+i+1);
-  }
+  returnText = returnText.replace(/\" *: *\"/g, "\0");
+  returnText = returnText.replace(/\" *, *\"/g, "\1");
+  returnText = returnText.slice(2, -2)
+  returnText = returnText.replace(/\"/g, "\\\"")
+  returnText = returnText.replace(/\0/g, "\" : \"");
+  returnText = returnText.replace(/\1/g, "\" , \"");
+  returnText = "{\"" + returnText + "\"}";
   return returnText;
 }
 
