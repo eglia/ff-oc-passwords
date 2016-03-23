@@ -30,24 +30,50 @@ function updateLogins(logins, numTotalLogins) {
   while (divLogins.firstChild) {
     divLogins.removeChild(divLogins.firstChild);
   }
-  for (var i=0; i<logins.length; i++) {
-    var btn = document.createElement("button");
-    var t = document.createTextNode(logins[i]);
-    btn.id = i;
-    btn.style.border = "1px solid";
-    btn.appendChild(t);
-    divLogins.appendChild(btn);
-    var createClickHandler = 
-      function(clickedLogin) {
-        return function() { 
-          self.port.emit("loginClicked", clickedLogin.id);
-      };
-    };
-    btn.onclick = createClickHandler(btn);
-  }
   if (logins.length == 0) {
     var t = document.createTextNode("No logins found for this site");
     divLogins.appendChild(t);
+  } else {
+    var table = document.createElement("table");
+    for (var i=0; i<logins.length; i++) {
+      var row = document.createElement("tr");
+      var col0 = document.createElement("td");
+      var col1 = document.createElement("td");
+      var col2 = document.createElement("td");
+      var col0Text = document.createTextNode(logins[i]);
+      col0.appendChild(col0Text);
+      row.appendChild(col0);
+      var fillButton = document.createElement("button");
+      var fillButtonText = document.createTextNode("Fill");
+      fillButton.appendChild(fillButtonText);
+      fillButton.name = i;
+      fillButton.style.border = "1px solid";
+      var createClickHandler =
+        function(clickedLogin) {
+          return function() {
+            self.port.emit("loginClicked", clickedLogin.name);
+          };
+        };
+      fillButton.onclick = createClickHandler(fillButton);
+      col1.appendChild(fillButton);
+      row.appendChild(col1);
+      var copyButton = document.createElement("button");
+      var copyButtonText = document.createTextNode("Copy");
+      copyButton.appendChild(copyButtonText);
+      copyButton.name = i;
+      copyButton.style.border = "1px solid";
+      var createClickHandler =
+        function(clickedLogin) {
+          return function() {
+            self.port.emit("copyClicked", clickedLogin.name);
+          };
+        };
+      copyButton.onclick = createClickHandler(copyButton);
+      col2.appendChild(copyButton);
+      row.appendChild(col2);
+      table.appendChild(row);
+    }
+    divLogins.appendChild(table)
   }
   textTotalLogins.removeChild(textTotalLogins.firstChild);
   var t = document.createTextNode(numTotalLogins + " logins in database");

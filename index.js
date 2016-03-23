@@ -49,6 +49,7 @@ passwords.search({
 if (!mobile) {
   var ui = require("sdk/ui");
   var panel = require("sdk/panel");
+  var clipboard = require("sdk/clipboard");
 
   var mainButton = ui.ToggleButton({
     id: "owncloudPasswordButton",
@@ -78,6 +79,7 @@ if (!mobile) {
   settingsPanel.port.on("saveSettings", saveSettingsPanel);
   settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
   mainPanel.port.on("loginClicked", mainPanelLoginClicked);
+  mainPanel.port.on("copyClicked", mainPanelCopyClicked);
   mainPanel.port.on("settingsClicked", mainPanelSettingsClicked);
   mainPanel.port.on("refreshClicked", mainPanelRefreshClicked);
   mainPanel.port.on("resize", mainPanelResize);
@@ -526,6 +528,10 @@ function mainPanelLoginClicked(id) {
     contentScriptFile: self.data.url("fill-password.js")
   });
   worker.port.emit("fillPassword", userList[id], passwordList[id]);
+}
+
+function mainPanelCopyClicked(id) {
+  clipboard.set(passwordList[id]);
 }
 
 function mainPanelSettingsClicked() {
