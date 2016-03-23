@@ -179,130 +179,6 @@ function cleanup(reason) {
   passwordMiner.destroy();
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////// START ///////////////////////////////////////////////////////
-// Temporarily borrowed from passwords app until https://github.com/fcturner/passwords/issues/145 is implemented. //
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function strength_func(Password) {
-  var charInStr;
-  var strength_calc;
-  var passwordLength;
-  var hasLowerCase;
-  var hasUpperCase;
-  var hasNumber;
-  var hasSpecialChar1;
-  var hasSpecialChar2;
-  var hasSpecialChar3;
-  var hasSpecialChar4;
-  var charInt;
-  passwordLength = Password.length;
-  strength_calc = 0;
-  // check length
-  switch(true) {
-    case passwordLength >= 8:
-      //strength_calc = 1;
-      break;
-    case passwordLength <= 4:
-      // password smaller than 5 chars is always bad
-      return 0;
-      break;
-  }
-  // loop ONCE through password
-  for (var i = 1; i < passwordLength + 1; i++) { 
-    charInStr = Password.slice(i, i + 1);
-    charInt = charInStr.charCodeAt(0);
-    switch(true) {
-      case charInt >= 97 && charInt <= 122:
-        if (!hasLowerCase) {
-          strength_calc = strength_calc + 1;
-          hasLowerCase = true;
-        }
-        break;
-      case charInt >= 65 && charInt <= 90:
-        if (!hasUpperCase) {
-          strength_calc = strength_calc + 1;
-          hasUpperCase = true;
-        }
-        break;
-      case charInt >= 48 && charInt <= 57:
-        if (!hasNumber) {
-          strength_calc = strength_calc + 1;
-          hasNumber = true;
-        }
-        break;
-      case charInt >= 33 && charInt <= 47:
-        if (!hasSpecialChar1) {
-          strength_calc = strength_calc + 1;
-          hasSpecialChar1 = true;
-        }
-        break;
-      case charInt >= 58 && charInt <= 64:
-        if (!hasSpecialChar2) {
-          strength_calc = strength_calc + 1;
-          hasSpecialChar2 = true;
-        }
-        break;
-      case charInt >= 91 && charInt <= 96:
-        if (!hasSpecialChar3) {
-          strength_calc = strength_calc + 1;
-          hasSpecialChar3 = true;
-        }
-        break;
-      case charInt >= 123 && charInt <= 255:
-        if (!hasSpecialChar4) {
-          strength_calc = strength_calc + 1;
-          hasSpecialChar4 = true;
-        }
-        break;
-    }
-  }
-  strength_calc = strength_calc + (Math.floor(passwordLength / 8) * ((hasLowerCase ? 1 : 0) + (hasUpperCase ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecialChar1 ? 1 : 0) + (hasSpecialChar2 ? 1 : 0) + (hasSpecialChar3 ? 1 : 0) + (hasSpecialChar4 ? 1 : 0)));
-  var power = 6;
-  strength_calc = strength_calc + Math.round(Math.pow(passwordLength, power) / Math.pow(10, power + 1));
-  return strength_calc;
-}
-
-function strHasLower(str) {
-  return str.toUpperCase() != str;
-}
-
-function strHasUpper(str) {
-  return str.toLowerCase() != str;
-}
-
-function strHasNumber(str) {
-  var regex = /\d/g;
-  return regex.test(str);
-}
-
-function strHasSpecial(str) {
-  var number;
-  for (var i = 0; i < str.length; i++) {
-    number = 0;
-    number = str.substring(i, i + 1).charCodeAt(0);
-    switch(true) {
-      case number === 33:
-      case number >= 35 && number <= 36:
-      case number === 38:
-      case number >= 40 && number <= 41:
-      case number === 43:
-      case number >= 45 && number <= 47:
-      case number >= 58 && number <= 60:
-      case number >= 62 && number <= 64:
-      case number === 95:
-        return true;
-        break;
-    }
-  }
-  // no special chars
-  return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////// END ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 function passwordMined(url, user, password) {
   if (loginList == null) {
     return
@@ -362,28 +238,13 @@ function saveLogin() {
   }
   var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
   if (minedMatchingID == -1) {
-    var d = new Date();
-    // date as YYYY-MM-DD
-    var changedDate = d.getFullYear()
-      + "-" + ('0' + (d.getMonth() + 1)).slice(-2)
-      + "-" + ('0' + d.getDate()).slice(-2);
     var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
     var data = {
       "website": getHostFromURL(minedURL),
       "pass": minedPassword,
-      "properties":
-        "\"loginname\": \"" + minedUser + "\", " +
-        "\"address\": \"" + minedURL + "\", " +
-        "\"strength\": \"" + strength_func(minedPassword) + "\", " +
-        "\"length\": \"" + minedPassword.length + "\", " +
-        "\"lower\": \"" + ~~strHasLower(minedPassword) + "\", " +
-        "\"upper\": \"" + ~~strHasUpper(minedPassword) + "\", " +
-        "\"number\": \"" + ~~strHasNumber(minedPassword) + "\", " +
-        "\"special\": \"" + ~~strHasSpecial(minedPassword) + "\", " +
-        "\"category\": \"0\", " +
-        "\"datechanged\": \"" + changedDate + "\", " +
-        "\"notes\": \"\"",
-      "deleted": "0"
+      "loginname": minedUser,
+      "address": minedURL,
+      "notes": ""
     };
     apiRequest.addEventListener("load", fetchLoginList);
     apiRequest.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
@@ -405,11 +266,6 @@ function saveLogin() {
 
 function replaceLogin(response) {
   var data = JSONtoObject(response);
-  var d = new Date();
-  // date as YYYY-MM-DD
-  var changedDate = d.getFullYear()
-    + "-" + ('0' + (d.getMonth() + 1)).slice(-2)
-    + "-" + ('0' + d.getDate()).slice(-2);
   var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
 
   var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
@@ -422,19 +278,9 @@ function replaceLogin(response) {
   var newData = {
     "website": data["website"],
     "pass": minedPassword,
-    "properties":
-      "\"loginname\": \"" + data["properties"]["loginname"] + "\", " +
-      "\"address\": \"" + data["properties"]["address"] + "\", " +
-      "\"strength\": \"" + strength_func(minedPassword) + "\", " +
-      "\"length\": \"" + minedPassword.length + "\", " +
-      "\"lower\": \"" + ~~strHasLower(minedPassword) + "\", " +
-      "\"upper\": \"" + ~~strHasUpper(minedPassword) + "\", " +
-      "\"number\": \"" + ~~strHasNumber(minedPassword) + "\", " +
-      "\"special\": \"" + ~~strHasSpecial(minedPassword) + "\", " +
-      "\"category\": \"" + data["properties"]["category"] + "\", " +
-      "\"datechanged\": \"" + changedDate + "\", " +
-      "\"notes\": \"" + data["properties"]["notes"] + "\"",
-    "deleted": "0"
+    "loginname": data["properties"]["loginname"],
+    "address": data["properties"]["address"],
+    "notes": data["properties"]["notes"]
   };
   apiRequest2.addEventListener("load", fetchLoginList);
   apiRequest2.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
