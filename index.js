@@ -385,6 +385,14 @@ function fetchLoginList() {
     onComplete: function (response) {
       if (response.status == 200){
         loginList = response.json;
+        if (loginList.length > 0 && loginList[0]["properties"] == null) {
+          notifications.notify({
+            title: "Incompatible app version",
+            text: "Your ownCloud is running an outdated version of the Passwords app."
+          });
+          loginList = null;
+          return;
+        }
         var tempLoginList = [];
         for (var i=0; i<loginList.length; i++) {
           if (loginList[i]["deleted"] == "0") {

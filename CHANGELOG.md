@@ -1,10 +1,11 @@
 ## Changelog
 ### 0.3.0 (unreleased)
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
+- Added proper cleanup function
+- Added warning when using a passwords app older than v17
+- Improved JSON escape
 - Fixed warnings not showing when opening settings panel
 - Fixed refresh button getting stuck
-- Improved JSON escape
-- Added proper cleanup function
 
 ### 0.2.12
 - Added option to not store owncloud password
