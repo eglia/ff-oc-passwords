@@ -13,3 +13,25 @@ All data exchange with the ownCloud instance is done via the API.
 
 The ownCloud username and password are stored locally in the Firefox password manager.
 **It is strongly recommended to set a master password in Firefox, otherwise all passwords will be accessible for anyone with access to your computer!**
+
+##Settings
+- **Remember login**
+
+  If checked, the ownCloud credentials will be stored in the Firefox password manager.
+  If unchecked, the owncloud credentials will only be stored in memory and need to be entered on every browser start.
+
+- **Include name field in site matching**
+
+  Determines whether the name field should be treated as an URL and used to match a password to a site. If unchecked, only the URL field will be used.
+
+- **Ignore protocol for site matching**
+
+  Determines whether the extension will check for a matching protocol when matching a password to a site. If unchecked, a password with URL `http://example.org` will not match `https://example.org`.
+
+- **Ignore subdomain for site matching**
+
+  Determines whether the extension will check for a matching subdomain when matching a password to a site. If unchecked, a password with URL `https://sub.example.org` will not match `https://example.org`.
+
+- **Ignore path for site matching**
+
+  Determines whether the extension will check for a matching path when matching a password to a site. If unchecked, a password with URL `https://example.org/path` will not match `https://example.org`.
