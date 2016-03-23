@@ -269,10 +269,19 @@ function replaceLogin(response) {
   var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
 
   var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
-  apiRequest.open("PATCH", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
+  var oldData = {
+    "website": data["website"],
+    "pass": data["pass"],
+    "loginname": data["properties"]["loginname"],
+    "address": data["properties"]["address"],
+    "notes": data["properties"]["notes"],
+    "datechanged": data["properties"]["datechanged"],
+    "deleted": "1"
+  };
+  apiRequest.open("PUT", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
   apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
   apiRequest.setRequestHeader("Content-Type", "application/json");
-  apiRequest.send(JSON.stringify({"deleted": "1"}));
+  apiRequest.send(JSON.stringify(oldData));
 
   var apiRequest2 = new xhr.XMLHttpRequest({"mozAnon": true});
   var newData = {
