@@ -185,15 +185,15 @@ function passwordMined(url, user, password) {
   if (loginList == null) {
     return
   }
-  var host = getHostFromURL(url);
+  var host = processURL(url);
   var userList = [];
   var passwordList = [];
   var idList = [];
   var title = "";
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = getHostFromURL(loginList[i]["properties"]["address"])
-    var entryWebsite = getHostFromURL(loginList[i]["website"])
-    if (host == entryAddress || host == entryWebsite) {
+    var entryAddress = processURL(loginList[i]["properties"]["address"])
+    var entryWebsite = processURL(loginList[i]["website"])
+    if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       idList.push(loginList[i]["id"]);
@@ -306,7 +306,7 @@ function cancelLogin() {
   }
 }
 
-function saveSettingsPanel(host, user, password, timer, remember) {
+function saveSettingsPanel(host, user, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
   if (!mobile) {
     settingsPanel.hide();
   }
@@ -318,6 +318,10 @@ function saveSettingsPanel(host, user, password, timer, remember) {
   }
   simplePrefs.prefs["databaseHost"] = host;
   simplePrefs.prefs["refreshTimer"] = parseInt(timer);
+  simplePrefs.prefs["includeName"] = includeName;
+  simplePrefs.prefs["ignoreProtocol"] = ignoreProtocol;
+  simplePrefs.prefs["ignoreSubdomain"] = ignoreSubdomain;
+  simplePrefs.prefs["ignorePath"] = ignorePath;
   passwords.search({
     realm: "ownCloud",
     onComplete: function onComplete(credentials) {
@@ -457,14 +461,14 @@ function processLoginList() {
   if (loginList == null || tabs.activeTab == null) {
     return
   }
-  var host = getHostFromURL(tabs.activeTab.url);
+  var host = processURL(tabs.activeTab.url);
   userList = [];
   passwordList = [];
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = getHostFromURL(loginList[i]["properties"]["address"])
-    var entryWebsite = getHostFromURL(loginList[i]["website"])
-    if (host == entryAddress || host == entryWebsite) {
+    var entryAddress = processURL(loginList[i]["properties"]["address"])
+    var entryWebsite = processURL(loginList[i]["website"])
+    if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
@@ -523,6 +527,71 @@ function getHostFromURL(URL) {
   }
 }
 
+function processURL(URL) {
+  if (URL == null || URL == "") {
+    return URL;
+  }
+  try {
+    var URLobj = url.URL(URL);
+  }
+  catch(err) {
+    if (simplePrefs.prefs["ignoreProtocol"]) {
+      try {
+        var URLobj = url.URL("http://" + URL);
+      }
+      catch(err2) {
+        return URL;
+      }
+    }
+    else {
+      return URL;
+    }
+  }
+  var protocol = URLobj.scheme;
+  var host = URLobj.host;
+  var path = URLobj.path;
+
+  if (host == null) {
+    return URL;
+  }
+
+  var splittedURL = host.split('.');
+  var isIP = false;
+  if (splittedURL.length == 4) {
+    isIP = true;
+    for (var i=0; i<splittedURL.length; i++) {
+      if (isNaN(splittedURL[i]) || splittedURL[i] < 0 || splittedURL[i] > 255) {
+        isIP = false;
+      }
+    }
+  }
+  if (isIP) {
+    var baseHost = host;
+  }
+  else
+  {
+    var TLDlength = url.getTLD(URLobj).split('.').length;
+    var baseHost = splittedURL.slice(- TLDlength - 1);
+  }
+  var returnURL = "";
+  if (!simplePrefs.prefs["ignoreProtocol"]) {
+    returnURL += protocol + "://";
+  }
+  if (!simplePrefs.prefs["ignoreSubdomain"]) {
+    returnURL += host;
+  }
+  else {
+    returnURL += baseHost;
+  }
+  if (!simplePrefs.prefs["ignorePath"] && path != null && path) {
+    returnURL += path;
+  }
+  if (returnURL.slice(-1) == "/") {
+    returnURL = returnURL.slice(0, -1);
+  }
+  return returnURL;
+}
+
 function mainPanelLoginClicked(id) {
   var worker = tabs.activeTab.attach({
     contentScriptFile: self.data.url("fill-password.js")
@@ -559,6 +628,10 @@ function addPanelResize(width, height) {
 function settingsPanelRefresh(credentials) {
   var databaseHost = simplePrefs.prefs["databaseHost"];
   var refreshTimer = simplePrefs.prefs["refreshTimer"];
+  var includeName = simplePrefs.prefs["includeName"];
+  var ignoreProtocol = simplePrefs.prefs["ignoreProtocol"];
+  var ignoreSubdomain = simplePrefs.prefs["ignoreSubdomain"];
+  var ignorePath = simplePrefs.prefs["ignorePath"];
   var databaseUser = ""
   var databasePassword = ""
   if (credentials.length > 0) {
@@ -566,9 +639,11 @@ function settingsPanelRefresh(credentials) {
     databasePassword = credentials[0].password;
   }
   if (!mobile) {
-    settingsPanel.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer);
+    settingsPanel.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer,
+                            includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
   }
   else {
-    settingsPanelWorker.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer);
+    settingsPanelWorker.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer,
+                                  includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
   }
 }

@@ -24,5 +24,33 @@
     "type": "integer",
     "value": 600,
     "hidden": true
+  },
+  {
+    "name": "includeName",
+    "title": "Include name field in site matching",
+    "type": "bool",
+    "value": true,
+    "hidden": true
+  },
+  {
+    "name": "ignoreProtocol",
+    "title": "Ignore protocol for site matching",
+    "type": "bool",
+    "value": true,
+    "hidden": true
+  },
+  {
+    "name": "ignoreSubdomain",
+    "title": "Ignore Subdomain for site matching",
+    "type": "bool",
+    "value": true,
+    "hidden": true
+  },
+  {
+    "name": "ignorePath",
+    "title": "Ignore path for site matching",
+    "type": "bool",
+    "value": true,
+    "hidden": true
   }]
 }

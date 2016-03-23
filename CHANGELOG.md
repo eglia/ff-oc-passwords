@@ -2,6 +2,7 @@
 ### 0.3.0 (unreleased)
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
 - Added functionality to copy passwords to clipboard ([#7](https://github.com/eglia/ff-oc-passwords/issues/7))
+- Added functionality to fine tune site matching ([#8](https://github.com/eglia/ff-oc-passwords/issues/8))
 - Added proper cleanup function
 - Added warning when using a passwords app older than v17
 - Improved JSON escape

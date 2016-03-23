@@ -5,13 +5,18 @@ var inputTimer = document.getElementById("timer");
 var inputSave = document.getElementById("save");
 var inputCancel = document.getElementById("cancel");
 var inputRemember = document.getElementById("remember");
+var inputIncludeName = document.getElementById("includeName");
+var inputIgnoreProtocol = document.getElementById("ignoreProtocol");
+var inputIgnoreSubdomain = document.getElementById("ignoreSubdomain");
+var inputIgnorePath = document.getElementById("ignorePath");
 var warningRemember = document.getElementById("rememberWarning");
 var warningHost = document.getElementById("hostWarning");
 
 inputSave.addEventListener("click", saveSettings);
 
 function saveSettings() {
-  self.port.emit("saveSettings", inputHost.value, inputUser.value, inputPassword.value, inputTimer.value, inputRemember.checked);
+  self.port.emit("saveSettings", inputHost.value, inputUser.value, inputPassword.value, inputTimer.value, inputRemember.checked,
+                 inputIncludeName.checked, inputIgnoreProtocol.checked, inputIgnoreSubdomain.checked, inputIgnorePath.checked);
 }
 
 inputCancel.addEventListener("click", cancelSettings);
@@ -46,7 +51,7 @@ function hostChanged() {
 }
 
 self.port.on("show", show);
-function show(host, user, password, timer) {
+function show(host, user, password, timer, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
   inputHost.value = host;
   inputUser.value = user;
   inputPassword.value = password;
@@ -59,5 +64,9 @@ function show(host, user, password, timer) {
     inputRemember.checked = true;
     warningRemember.style.display = "table-row";
   }
+  inputIncludeName.checked = includeName;
+  inputIgnoreProtocol.checked = ignoreProtocol;
+  inputIgnoreSubdomain.checked = ignoreSubdomain;
+  inputIgnorePath.checked = ignorePath;
   hostChanged();
 }
