@@ -383,6 +383,9 @@ function fetchLoginList() {
   if (databaseHost == null || databaseUser == null || databasePassword == null) {
     return;
   }
+  if (!mobile) {
+    mainPanel.port.emit("refreshStarted");
+  }
   var encodedData = base64.encode(databaseUser + ":" + databasePassword);
   var passwordRequest = request.Request({
     url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords",
@@ -397,6 +400,9 @@ function fetchLoginList() {
             text: "Your ownCloud is running an outdated version of the Passwords app."
           });
           loginList = null;
+          if (!mobile) {
+            mainPanel.port.emit("refreshFinished");
+          }
           return;
         }
         var tempLoginList = [];

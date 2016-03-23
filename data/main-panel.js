@@ -13,6 +13,11 @@ buttonRefresh.addEventListener("click", buttonRefreshClick);
 
 function buttonRefreshClick() {
   self.port.emit("refreshClicked");
+}
+
+self.port.on("refreshStarted", refreshStarted);
+
+function refreshStarted() {
   buttonRefresh.childNodes[0].nodeValue = "Working...";
   buttonRefresh.disabled = true;
 }
