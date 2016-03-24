@@ -24,6 +24,8 @@ var minedUser = null;
 var minedPassword = null;
 var minedMatchingID = null;
 var passwordMiner = null;
+var clipBoardCountdown = 0;
+var clipBoardCountdownTimer = null;
 
 exports.onUnload = cleanup;
 
@@ -176,6 +178,9 @@ function cleanup(reason) {
     NativeWindow.menu.remove(refreshMenu);
     NativeWindow.menu.remove(settingsMenu);
     NativeWindow.menu.remove(parentMenu);
+  }
+  if (clipBoardCountdownTimer != null) {
+    timers.clearTimeout(clipBoardCountdownTimer);
   }
   timers.clearInterval(refreshInterval);
   passwordMiner.destroy();
@@ -606,7 +611,25 @@ function mainPanelLoginClicked(id) {
 }
 
 function mainPanelCopyClicked(id) {
+  if (clipBoardCountdownTimer != null) {
+    timers.clearTimeout(clipBoardCountdownTimer);
+  }
   clipboard.set(passwordList[id]);
+  clipBoardCountdown = 10;
+  mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
+  clipBoardCountdownTimer = timers.setTimeout(clearClipboardCountdown, 1000);
+}
+
+function clearClipboardCountdown() {
+  clipBoardCountdown -= 1;
+  mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
+  if (clipBoardCountdown == 0) {
+    clipboard.set("");
+    clipBoardCountdownTimer = null;
+  }
+  else {
+    clipBoardCountdownTimer = timers.setTimeout(clearClipboardCountdown, 1000);
+  }
 }
 
 function mainPanelSettingsClicked() {

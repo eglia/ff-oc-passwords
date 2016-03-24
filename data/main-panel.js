@@ -2,6 +2,7 @@ var buttonSettings = document.getElementById("buttonSettings");
 var buttonRefresh = document.getElementById("buttonRefresh");
 var divLogins = document.getElementById("divLogins");
 var textTotalLogins = document.getElementById("textTotalLogins");
+var lastClickedCopyButton = null;
 
 buttonSettings.addEventListener("click", buttonSettingsClick);
 
@@ -51,6 +52,7 @@ function updateLogins(logins, numTotalLogins) {
       var fillButton = document.createElement("button");
       var fillButtonText = document.createTextNode("Fill");
       fillButton.appendChild(fillButtonText);
+      fillButton.id = "fill" + i;
       fillButton.name = i;
       fillButton.style.border = "1px solid";
       var createClickHandler =
@@ -65,11 +67,16 @@ function updateLogins(logins, numTotalLogins) {
       var copyButton = document.createElement("button");
       var copyButtonText = document.createTextNode("Copy");
       copyButton.appendChild(copyButtonText);
+      copyButton.id = "copy" + i;
       copyButton.name = i;
       copyButton.style.border = "1px solid";
       var createClickHandler =
         function(clickedLogin) {
           return function() {
+            if (lastClickedCopyButton != null) {
+              lastClickedCopyButton.childNodes[0].nodeValue = "Copy";
+            }
+            lastClickedCopyButton = clickedLogin;
             self.port.emit("copyClicked", clickedLogin.name);
           };
         };
@@ -90,4 +97,15 @@ self.port.on("show", show);
 
 function show() {
   self.port.emit("resize", document.documentElement.clientWidth, document.documentElement.clientHeight);
+}
+
+self.port.on("clipBoardCountdown", clipBoardCountdown);
+
+function clipBoardCountdown(count) {
+  if (count > 0) {
+    lastClickedCopyButton.childNodes[0].nodeValue = count;
+  }
+  else {
+    lastClickedCopyButton.childNodes[0].nodeValue = "Copy";
+  }
 }
