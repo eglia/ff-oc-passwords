@@ -1,0 +1,9 @@
+.*
+*
+!/data/**
+!/lib/**
+!/index.js
+!/package.json
+!/LICENSE
+!/CHANGELOG.md
+!/README.md
