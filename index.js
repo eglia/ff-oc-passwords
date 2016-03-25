@@ -8,8 +8,9 @@ var simplePrefs = require("sdk/simple-prefs");
 var passwords = require("sdk/passwords");
 var timers = require("sdk/timers");
 var pageMod = require("sdk/page-mod");
-var request = require("sdk/request");
-var xhr = require("sdk/net/xhr");
+
+var urlProcessor = require("./lib/url-processor.js");
+var api = require("./lib/api.js");
 
 var databaseHost = null;
 var databaseUser = null;
@@ -190,14 +191,17 @@ function passwordMined(url, user, password) {
   if (loginList == null) {
     return
   }
-  var host = processURL(url);
+  var host = urlProcessor.processURL(url, simplePrefs.prefs["ignoreProtocol"],
+                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
   var userList = [];
   var passwordList = [];
   var idList = [];
   var title = "";
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = processURL(loginList[i]["properties"]["address"])
-    var entryWebsite = processURL(loginList[i]["website"])
+    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
+    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
     if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
@@ -243,66 +247,22 @@ function saveLogin() {
   if (!mobile) {
     addPanel.hide();
   }
-  var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
   if (minedMatchingID == -1) {
-    var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
-    var data = {
-      "website": getHostFromURL(minedURL),
-      "pass": minedPassword,
-      "loginname": minedUser,
-      "address": minedURL,
-      "notes": ""
-    };
-    apiRequest.addEventListener("load", fetchLoginList);
-    apiRequest.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
-    apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
-    apiRequest.setRequestHeader("Content-Type", "application/json");
-    apiRequest.send(JSON.stringify(data));
+    api.create(databaseHost, databaseUser, databasePassword, minedUser, minedPassword,
+               urlProcessor.processURL(minedURL, true, true, true), minedURL, "", fetchLoginList);
   }
   else {
-    var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
-    apiRequest.addEventListener("load", function() {
-      replaceLogin(JSON.parse(apiRequest.response));
-    });
-    apiRequest.open("GET", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
-    apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
-    apiRequest.setRequestHeader("Content-Type", "application/json");
-    apiRequest.send();
+    api.fetchSingle(databaseHost, databaseUser, databasePassword, minedMatchingID, replaceLogin);
   }
 }
 
-function replaceLogin(response) {
-  var data = JSONtoObject(response);
-  var encodedLogin = base64.encode(databaseUser + ":" + databasePassword);
-
-  var apiRequest = new xhr.XMLHttpRequest({"mozAnon": true});
-  var oldData = {
-    "website": data["website"],
-    "pass": data["pass"],
-    "loginname": data["properties"]["loginname"],
-    "address": data["properties"]["address"],
-    "notes": data["properties"]["notes"],
-    "datechanged": data["properties"]["datechanged"],
-    "deleted": "1"
-  };
-  apiRequest.open("PUT", databaseHost + "/index.php/apps/passwords/api/0.1/passwords/" + minedMatchingID);
-  apiRequest.setRequestHeader("Authorization", "Basic " + encodedLogin);
-  apiRequest.setRequestHeader("Content-Type", "application/json");
-  apiRequest.send(JSON.stringify(oldData));
-
-  var apiRequest2 = new xhr.XMLHttpRequest({"mozAnon": true});
-  var newData = {
-    "website": data["website"],
-    "pass": minedPassword,
-    "loginname": data["properties"]["loginname"],
-    "address": data["properties"]["address"],
-    "notes": data["properties"]["notes"]
-  };
-  apiRequest2.addEventListener("load", fetchLoginList);
-  apiRequest2.open("POST", databaseHost + "/index.php/apps/passwords/api/0.1/passwords");
-  apiRequest2.setRequestHeader("Authorization", "Basic " + encodedLogin);
-  apiRequest2.setRequestHeader("Content-Type", "application/json");
-  apiRequest2.send(JSON.stringify(newData));
+function replaceLogin(data) {
+  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
+             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
+             "1");
+  
+  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
+             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
 }
 
 function cancelLogin() {
@@ -385,100 +345,34 @@ function processCredentials(credentials) {
 }
 
 function fetchLoginList() {
-  if (databaseHost == null || databaseUser == null || databasePassword == null) {
-    return;
-  }
   if (!mobile) {
     mainPanel.port.emit("refreshStarted");
   }
-  var encodedData = base64.encode(databaseUser + ":" + databasePassword);
-  var passwordRequest = request.Request({
-    url: databaseHost + "/index.php/apps/passwords/api/0.1/passwords",
-    headers: {"Authorization": "Basic " + encodedData},
-    anonymous: true,
-    onComplete: function (response) {
-      if (response.status == 200){
-        loginList = response.json;
-        if (loginList.length > 0 && loginList[0]["properties"] == null) {
-          notifications.notify({
-            title: "Incompatible app version",
-            text: "Your ownCloud is running an outdated version of the Passwords app."
-          });
-          loginList = null;
-          if (!mobile) {
-            mainPanel.port.emit("refreshFinished");
-          }
-          return;
-        }
-        var tempLoginList = [];
-        for (var i=0; i<loginList.length; i++) {
-          if (loginList[i]["deleted"] == "0") {
-            tempLoginList.push(JSONtoObject(loginList[i]));
-          }
-        }
-        loginList = tempLoginList;
-        processLoginList();
-      }
-      else {
-        notifications.notify({
-          title: "Failed to get passwords",
-          text: "Could not get passwords from the server :/"
-        });
-        console.error(response.status, response.json);
-        
-      }
-      if (!mobile) {
-        mainPanel.port.emit("refreshFinished");
-      }
-    }
-  });
-  passwordRequest.get();
+  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
 }
 
-function escapeJSON(text) {
-  var returnText = text;
-  returnText = returnText.replace(/\n/g, "\\n");
-  returnText = returnText.replace(/\r/g, "\\r");
-  returnText = returnText.replace(/\t/g, "\\t");
-  returnText = returnText.replace(/\f/g, "\\f");
-  returnText = returnText.replace(/\'/g, "\"");
-  returnText = returnText.replace(/\" *: *\"/g, "\0");
-  returnText = returnText.replace(/\" *, *\"/g, "\1");
-  returnText = returnText.slice(2, -2)
-  returnText = returnText.replace(/\"/g, "\\\"")
-  returnText = returnText.replace(/\0/g, "\" : \"");
-  returnText = returnText.replace(/\1/g, "\" , \"");
-  returnText = "{\"" + returnText + "\"}";
-  return returnText;
-}
-
-function JSONtoObject(json) {
-  var object = json;
-  var properties = "{" + object["properties"] + "}";
-  properties = escapeJSON(properties);
-  try {
-    properties = JSON.parse(properties);
+function fetchLoginListCallback(value) {
+  if (!mobile) {
+    mainPanel.port.emit("refreshFinished");
   }
-  catch(err) {
-    console.error(json);
-    console.error(properties);
-    console.exception(err);
-  }
-  object["properties"] = properties;
-  return object;
+  loginList = value;
+  processLoginList();
 }
 
 function processLoginList() {
   if (loginList == null || tabs.activeTab == null) {
     return
   }
-  var host = processURL(tabs.activeTab.url);
+  var host = urlProcessor.processURL(tabs.activeTab.url, simplePrefs.prefs["ignoreProtocol"],
+                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
   userList = [];
   passwordList = [];
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = processURL(loginList[i]["properties"]["address"])
-    var entryWebsite = processURL(loginList[i]["website"])
+    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
+    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
     if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
@@ -497,110 +391,6 @@ function processLoginList() {
   if (mobile) {
     populateFillMenu();
   }
-}
-
-function getHostFromURL(URL) {
-  var enhancedURL = URL;
-  try {
-    var URLobj = url.URL(URL);
-  }
-  catch(err) {
-    try {
-      enhancedURL = "http://" + URL;
-      var URLobj = url.URL(enhancedURL);
-    }
-    catch(err2) {
-      return URL;
-    }
-  }
-  try {
-    var splittedURL = URLobj.host.split('.');
-    if (splittedURL.length == 4) {
-      var valid = true;
-      for (var i=0; i<splittedURL.length; i++) {
-        if (isNaN(splittedURL[i]) || splittedURL[i] < 0 || splittedURL[i] > 255) {
-          valid = false;
-        }
-      }
-      if (valid) {
-        return URLobj.host;
-      }
-    }
-    var TLD = url.getTLD(enhancedURL);
-    var baseHost = splittedURL[splittedURL.length - 2];
-    if (TLD == null || baseHost == undefined) {
-      return URL;
-    }
-    return baseHost + '.' + TLD;
-  }
-  catch(err) {
-    return URL;
-  }
-}
-
-function processURL(URL) {
-  if (URL == null || URL == "") {
-    return URL;
-  }
-  try {
-    var URLobj = url.URL(URL);
-  }
-  catch(err) {
-    if (simplePrefs.prefs["ignoreProtocol"]) {
-      try {
-        var URLobj = url.URL("http://" + URL);
-      }
-      catch(err2) {
-        return URL;
-      }
-    }
-    else {
-      return URL;
-    }
-  }
-  var protocol = URLobj.scheme;
-  var host = URLobj.host;
-  var path = URLobj.path;
-
-  if (host == null) {
-    return URL;
-  }
-
-  var splittedURL = host.split('.');
-  var isIP = false;
-  if (splittedURL.length == 4) {
-    isIP = true;
-    for (var i=0; i<splittedURL.length; i++) {
-      if (isNaN(splittedURL[i]) || splittedURL[i] < 0 || splittedURL[i] > 255) {
-        isIP = false;
-      }
-    }
-  }
-  if (isIP) {
-    var baseHost = host;
-  }
-  else
-  {
-    var TLDlength = url.getTLD(URLobj).split('.').length;
-    var baseHost = splittedURL.slice(- TLDlength - 1);
-  }
-  var returnURL = "";
-  if (!simplePrefs.prefs["ignoreProtocol"]) {
-    returnURL += protocol + "://";
-  }
-  if (!simplePrefs.prefs["ignoreSubdomain"]) {
-    returnURL += host;
-  }
-  else {
-    returnURL += baseHost;
-  }
-  if (!simplePrefs.prefs["ignorePath"] && path != null && path) {
-    returnURL += path;
-  }
-  if (returnURL.slice(-1) == "/") {
-    returnURL = returnURL.slice(0, -1);
-  }
-  return returnURL;
 }
 
 function mainPanelLoginClicked(id) {
