@@ -1,11 +1,11 @@
 function getLoginFields() {
   var forms = [],
     pswd = (function(){
-      var inputs = document.getElementsByTagName('input'),
+      var inputs = document.getElementsByTagName("input"),
         len = inputs.length,
         ret = [];
       while (len--) {
-        if (inputs[len].type === 'password') {
+        if (inputs[len].type === "password") {
           ret[ret.length] = inputs[len];
         }
       }
@@ -14,7 +14,7 @@ function getLoginFields() {
     pswdLength = pswd.length,
     parentForm = function(elem) {
       while (elem.parentNode) {
-        if(elem.parentNode.nodeName.toLowerCase() === 'form') {
+        if(elem.parentNode.nodeName.toLowerCase() === "form") {
           return elem.parentNode;
         }
         elem = elem.parentNode;
@@ -25,9 +25,9 @@ function getLoginFields() {
       thisParentForm = parentForm(curPswdField),
       curField = curPswdField;
     if (thisParentForm) {
-      var inputs = thisParentForm.getElementsByTagName('input');
+      var inputs = thisParentForm.getElementsByTagName("input");
       for (var i = 0; i < inputs.length; i++) {
-        if (inputs[i] !== curPswdField && (inputs[i].type === 'text' || inputs[i].type === 'email')) {
+        if (inputs[i] !== curPswdField && (inputs[i].type === "text" || inputs[i].type === "email")) {
           forms[forms.length] = [thisParentForm, inputs[i], curPswdField];
           break;
         }

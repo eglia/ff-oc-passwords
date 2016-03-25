@@ -12,20 +12,14 @@ var inputIgnorePath = document.getElementById("ignorePath");
 var warningRemember = document.getElementById("rememberWarning");
 var warningHost = document.getElementById("hostWarning");
 
-inputSave.addEventListener("click", saveSettings);
-
 function saveSettings() {
   self.port.emit("saveSettings", inputHost.value, inputUser.value, inputPassword.value, inputTimer.value, inputRemember.checked,
                  inputIncludeName.checked, inputIgnoreProtocol.checked, inputIgnoreSubdomain.checked, inputIgnorePath.checked);
 }
 
-inputCancel.addEventListener("click", cancelSettings);
-
 function cancelSettings() {
   self.port.emit("cancelSettings");
 }
-
-inputRemember.addEventListener("change", rememberToggled);
 
 function rememberToggled() {
   if (inputRemember.checked) {
@@ -36,8 +30,6 @@ function rememberToggled() {
   }
   self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
 }
-
-inputHost.addEventListener("change", hostChanged);
 
 function hostChanged() {
   var scheme = inputHost.value.substr(0, 5);
@@ -50,13 +42,12 @@ function hostChanged() {
   self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
 }
 
-self.port.on("show", show);
 function show(host, user, password, timer, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
   inputHost.value = host;
   inputUser.value = user;
   inputPassword.value = password;
   inputTimer.value = timer;
-  if (password == "") {
+  if (password === "") {
     inputRemember.checked = false;
     warningRemember.style.display = "none";
   }
@@ -70,3 +61,10 @@ function show(host, user, password, timer, includeName, ignoreProtocol, ignoreSu
   inputIgnorePath.checked = ignorePath;
   hostChanged();
 }
+
+self.port.on("show", show);
+inputSave.addEventListener("click", saveSettings);
+inputCancel.addEventListener("click", cancelSettings);
+inputRemember.addEventListener("change", rememberToggled);
+inputHost.addEventListener("change", hostChanged);
+

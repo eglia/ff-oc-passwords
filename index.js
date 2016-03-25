@@ -28,27 +28,6 @@ var passwordMiner = null;
 var clipBoardCountdown = 0;
 var clipBoardCountdownTimer = null;
 
-exports.onUnload = cleanup;
-
-passwordMiner = pageMod.PageMod({
-  include: "*",
-  contentScriptFile: "./mine-password.js",
-  contentScriptWhen: "ready",
-  onAttach: function(worker) {
-    worker.port.on("passwordMined", passwordMined);
-  }
-});
-
-tabs.on("ready", processLoginList);
-tabs.on("activate", processLoginList);
-tabs.on("deactivate", processLoginList);
-tabs.on("open", processLoginList);
-
-passwords.search({
-  url: self.uri,
-  onComplete: processCredentials
-});
-
 if (!mobile) {
   var ui = require("sdk/ui");
   var panel = require("sdk/panel");
@@ -351,14 +330,6 @@ function fetchLoginList() {
   api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
 }
 
-function fetchLoginListCallback(value) {
-  if (!mobile) {
-    mainPanel.port.emit("refreshFinished");
-  }
-  loginList = value;
-  processLoginList();
-}
-
 function processLoginList() {
   if (loginList == null || tabs.activeTab == null) {
     return
@@ -391,6 +362,14 @@ function processLoginList() {
   if (mobile) {
     populateFillMenu();
   }
+}
+
+function fetchLoginListCallback(value) {
+  if (!mobile) {
+    mainPanel.port.emit("refreshFinished");
+  }
+  loginList = value;
+  processLoginList();
 }
 
 function mainPanelLoginClicked(id) {
@@ -466,3 +445,24 @@ function settingsPanelRefresh(credentials) {
                                   includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
   }
 }
+
+exports.onUnload = cleanup;
+
+passwordMiner = pageMod.PageMod({
+  include: "*",
+  contentScriptFile: "./mine-password.js",
+  contentScriptWhen: "ready",
+  onAttach: function(worker) {
+    worker.port.on("passwordMined", passwordMined);
+  }
+});
+
+tabs.on("ready", processLoginList);
+tabs.on("activate", processLoginList);
+tabs.on("deactivate", processLoginList);
+tabs.on("open", processLoginList);
+
+passwords.search({
+  url: self.uri,
+  onComplete: processCredentials
+});
