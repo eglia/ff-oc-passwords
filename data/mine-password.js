@@ -10,7 +10,7 @@ function getLoginFields() {
         }
       }
       return ret;
-    })(),
+    }()),
     pswdLength = pswd.length,
     parentForm = function(elem) {
       while (elem.parentNode) {
@@ -47,10 +47,10 @@ function formSubmitted(id) {
 
 var forms = getLoginFields();
 for (var i=0; i<forms.length; i++) {
-  forms[i][0].addEventListener("submit", function(){
+  forms[i][0].addEventListener("submit", (function(){
     var tmp = i;
     return function() {
       formSubmitted(tmp);
     }
-  }());
+  }()));
 }

@@ -4,33 +4,23 @@ var divLogins = document.getElementById("divLogins");
 var textTotalLogins = document.getElementById("textTotalLogins");
 var lastClickedCopyButton = null;
 
-buttonSettings.addEventListener("click", buttonSettingsClick);
-
 function buttonSettingsClick() {
   self.port.emit("settingsClicked");
 }
 
-buttonRefresh.addEventListener("click", buttonRefreshClick);
-
 function buttonRefreshClick() {
   self.port.emit("refreshClicked");
 }
-
-self.port.on("refreshStarted", refreshStarted);
 
 function refreshStarted() {
   buttonRefresh.childNodes[0].nodeValue = "Working...";
   buttonRefresh.disabled = true;
 }
 
-self.port.on("refreshFinished", refreshFinished);
-
 function refreshFinished() {
   buttonRefresh.childNodes[0].nodeValue = "Refresh";
   buttonRefresh.disabled = false;
 }
-
-self.port.on("updateLogins", updateLogins);
 
 function updateLogins(logins, numTotalLogins) {
   while (divLogins.firstChild) {
@@ -91,13 +81,9 @@ function updateLogins(logins, numTotalLogins) {
   self.port.emit("resize", document.documentElement.clientWidth, document.documentElement.clientHeight);
 }
 
-self.port.on("show", show);
-
 function show() {
   self.port.emit("resize", document.documentElement.clientWidth, document.documentElement.clientHeight);
 }
-
-self.port.on("clipBoardCountdown", clipBoardCountdown);
 
 function clipBoardCountdown(count) {
   if (count > 0) {
@@ -107,3 +93,12 @@ function clipBoardCountdown(count) {
     lastClickedCopyButton.childNodes[0].nodeValue = "Copy";
   }
 }
+
+buttonSettings.addEventListener("click", buttonSettingsClick);
+buttonRefresh.addEventListener("click", buttonRefreshClick);
+self.port.on("refreshStarted", refreshStarted);
+self.port.on("refreshFinished", refreshFinished);
+self.port.on("updateLogins", updateLogins);
+self.port.on("clipBoardCountdown", clipBoardCountdown);
+self.port.on("show", show);
+

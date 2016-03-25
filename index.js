@@ -18,7 +18,7 @@ var databasePassword = null;
 var loginList = null;
 var userList = [];
 var passwordList = [];
-var mobile = system.platform == "android";
+var mobile = system.platform === "android";
 var refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
 var minedURL = null;
 var minedUser = null;
@@ -33,51 +33,30 @@ if (!mobile) {
   var panel = require("sdk/panel");
   var clipboard = require("sdk/clipboard");
 
-  var mainButton = ui.ToggleButton({
+  var mainButton = new ui.ToggleButton({
     id: "owncloudPasswordButton",
     label: "ownCloud Passwords",
     icon: "./app_black.png",
     onChange: handleMainButtonClick
   });
 
-  var mainPanel = panel.Panel({
+  var mainPanel = new panel.Panel({
     contentURL: self.data.url("main-panel.html"),
     contentScriptFile: self.data.url("main-panel.js"),
     onHide: handleHide
   });
 
-  var settingsPanel = panel.Panel({
+  var settingsPanel = new panel.Panel({
     contentURL: self.data.url("settings-panel.html"),
     contentScriptFile: self.data.url("settings-panel.js"),
     onHide: handleHide
   });
 
-  var addPanel = panel.Panel({
+  var addPanel = new panel.Panel({
     contentURL: self.data.url("add-panel.html"),
     contentScriptFile: self.data.url("add-panel.js"),
     onHide: handleHide
   });
-
-  settingsPanel.port.on("saveSettings", saveSettingsPanel);
-  settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
-  mainPanel.port.on("loginClicked", mainPanelLoginClicked);
-  mainPanel.port.on("copyClicked", mainPanelCopyClicked);
-  mainPanel.port.on("settingsClicked", mainPanelSettingsClicked);
-  mainPanel.port.on("refreshClicked", mainPanelRefreshClicked);
-  mainPanel.port.on("resize", mainPanelResize);
-  mainPanel.on("show", function() {
-    mainPanel.port.emit("show");
-  });
-  settingsPanel.port.on("resize", settingsPanelResize);
-  settingsPanel.on("show", function() {
-    passwords.search({
-      url: self.uri,
-      onComplete: settingsPanelRefresh
-    });
-  });
-  addPanel.port.on("resize", addPanelResize);
-  addPanel.port.on("saveLogin", saveLogin);
-  addPanel.port.on("cancelLogin", cancelLogin);
 }
 
 if (mobile) {
@@ -137,7 +116,7 @@ if (mobile) {
            var tmp = i;
            return function() {
              fillMenuTapped(tmp);
-           }
+           };
         }()
       });
     }
@@ -466,3 +445,26 @@ passwords.search({
   url: self.uri,
   onComplete: processCredentials
 });
+
+if (!mobile) {
+  settingsPanel.port.on("saveSettings", saveSettingsPanel);
+  settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
+  mainPanel.port.on("loginClicked", mainPanelLoginClicked);
+  mainPanel.port.on("copyClicked", mainPanelCopyClicked);
+  mainPanel.port.on("settingsClicked", mainPanelSettingsClicked);
+  mainPanel.port.on("refreshClicked", mainPanelRefreshClicked);
+  mainPanel.port.on("resize", mainPanelResize);
+  mainPanel.on("show", function() {
+    mainPanel.port.emit("show");
+  });
+  settingsPanel.port.on("resize", settingsPanelResize);
+  settingsPanel.on("show", function() {
+    passwords.search({
+      url: self.uri,
+      onComplete: settingsPanelRefresh
+    });
+  });
+  addPanel.port.on("resize", addPanelResize);
+  addPanel.port.on("saveLogin", saveLogin);
+  addPanel.port.on("cancelLogin", cancelLogin);
+}

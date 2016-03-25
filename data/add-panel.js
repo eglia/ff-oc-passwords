@@ -3,21 +3,21 @@ var textUser = document.getElementById("user");
 var buttonSave = document.getElementById("save");
 var buttonCancel = document.getElementById("cancel");
 
-buttonSave.addEventListener("click", saveLogin);
-
 function saveLogin() {
   self.port.emit("saveLogin");
 }
-
-buttonCancel.addEventListener("click", cancelLogin);
 
 function cancelLogin() {
   self.port.emit("cancelLogin");
 }
 
-self.port.on("show", show);
 function show(title, user) {
   textTitle.textContent = title;
   textUser.textContent = user;
   self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
 }
+
+self.port.on("show", show);
+buttonSave.addEventListener("click", saveLogin);
+buttonCancel.addEventListener("click", cancelLogin);
+
