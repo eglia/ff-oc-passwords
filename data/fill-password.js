@@ -1,5 +1,3 @@
-self.port.on("fillPassword", fillPassword);
-
 function getLoginFields() {
   var fieldPairs = [],
     pswd = (function(){
@@ -45,3 +43,6 @@ function fillPassword(user, password) {
     loginFields[i][1].value = password;
   }
 }
+
+self.port.on("fillPassword", fillPassword);
+

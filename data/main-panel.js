@@ -26,7 +26,7 @@ function updateLogins(logins, numTotalLogins) {
   while (divLogins.firstChild) {
     divLogins.removeChild(divLogins.firstChild);
   }
-  if (logins.length == 0) {
+  if (logins.length === 0) {
     var noLoginsText = document.createTextNode("No logins found for this site");
     divLogins.appendChild(noLoginsText);
   } else {

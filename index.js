@@ -1,9 +1,6 @@
 var self = require("sdk/self");
-var system = require("sdk/system")
-var base64 = require("sdk/base64");
+var system = require("sdk/system");
 var tabs = require("sdk/tabs");
-var url = require("sdk/url");
-var notifications = require("sdk/notifications");
 var simplePrefs = require("sdk/simple-prefs");
 var passwords = require("sdk/passwords");
 var timers = require("sdk/timers");
@@ -19,7 +16,7 @@ var loginList = null;
 var userList = [];
 var passwordList = [];
 var mobile = system.platform === "android";
-var refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
+var refreshInterval = null;
 var minedURL = null;
 var minedUser = null;
 var minedPassword = null;
@@ -63,7 +60,7 @@ if (mobile) {
   var Services = require("resource://gre/modules/Services.jsm").Services;
   var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
   
-  var settingsPanelWorker = undefined;
+  var settingsPanelWorker = null;
   var parentMenu = NativeWindow.menu.add({
     name: "Passwords"
   });
@@ -112,18 +109,18 @@ if (mobile) {
       fillMenuElements[i] = NativeWindow.menu.add({
         name: userList[i],
         parent: parentMenu,
-        callback: function() {
+        callback: (function() {
            var tmp = i;
            return function() {
              fillMenuTapped(tmp);
            };
-        }()
+        }())
       });
     }
   }
 }
 
-function cleanup(reason) {
+function cleanup() {
   if (!mobile) {
     mainButton.destroy();
     mainPanel.destroy();
@@ -146,8 +143,8 @@ function cleanup(reason) {
 }
 
 function passwordMined(url, user, password) {
-  if (loginList == null) {
-    return
+  if (loginList === null) {
+    return;
   }
   var host = urlProcessor.processURL(url, simplePrefs.prefs["ignoreProtocol"],
                                      simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
@@ -157,10 +154,10 @@ function passwordMined(url, user, password) {
   var title = "";
   for (var i=0; i<loginList.length; i++) {
     var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
-    if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       idList.push(loginList[i]["id"]);
@@ -169,7 +166,7 @@ function passwordMined(url, user, password) {
   minedMatchingID = -1;
   title = "Detected new login:";
   for (var i=0; i<userList.length; i++) {
-    if (userList[i] == user) {
+    if (userList[i] === user) {
       if (passwordList[i] != password) {
         minedMatchingID = idList[i];
         title = "Detected changed password for user:";
@@ -205,7 +202,7 @@ function saveLogin() {
   if (!mobile) {
     addPanel.hide();
   }
-  if (minedMatchingID == -1) {
+  if (minedMatchingID === -1) {
     api.create(databaseHost, databaseUser, databasePassword, minedUser, minedPassword,
                urlProcessor.processURL(minedURL, true, true, true), minedURL, "", fetchLoginList);
   }
@@ -236,7 +233,7 @@ function saveSettingsPanel(host, user, password, timer, remember, includeName, i
   else {
     tabs.activeTab.close();
   }
-  if (host.slice(-1) == "/") {
+  if (host.slice(-1) === "/") {
     host = host.slice(0, -1);
   }
   simplePrefs.prefs["databaseHost"] = host;
@@ -280,8 +277,8 @@ function handleHide() {
 }
 
 function handleMainButtonClick(state) {
-  if (state.checked == true) {
-    if (databaseUser == null || databasePassword == null) {
+  if (state.checked === true) {
+    if (databaseUser === null || databasePassword === null) {
       settingsPanel.show({position: mainButton});
     } else {
       mainPanel.show({position: mainButton});
@@ -310,7 +307,7 @@ function fetchLoginList() {
 }
 
 function processLoginList() {
-  if (loginList == null || tabs.activeTab == null) {
+  if (loginList === null || tabs.activeTab === null) {
     return
   }
   var host = urlProcessor.processURL(tabs.activeTab.url, simplePrefs.prefs["ignoreProtocol"],
@@ -323,7 +320,7 @@ function processLoginList() {
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
     var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
-    if (host == entryAddress || simplePrefs.prefs["includeName"] && host == entryWebsite) {
+    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
@@ -371,7 +368,7 @@ function mainPanelCopyClicked(id) {
 function clearClipboardCountdown() {
   clipBoardCountdown -= 1;
   mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
-  if (clipBoardCountdown == 0) {
+  if (clipBoardCountdown === 0) {
     clipboard.set("");
     clipBoardCountdownTimer = null;
   }
@@ -427,11 +424,11 @@ function settingsPanelRefresh(credentials) {
 
 exports.onUnload = cleanup;
 
-passwordMiner = pageMod.PageMod({
+passwordMiner = new pageMod.PageMod({
   include: "*",
   contentScriptFile: "./mine-password.js",
   contentScriptWhen: "ready",
-  onAttach: function(worker) {
+  onAttach(worker) {
     worker.port.on("passwordMined", passwordMined);
   }
 });
@@ -445,6 +442,8 @@ passwords.search({
   url: self.uri,
   onComplete: processCredentials
 });
+
+refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
 
 if (!mobile) {
   settingsPanel.port.on("saveSettings", saveSettingsPanel);

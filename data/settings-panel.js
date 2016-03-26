@@ -33,7 +33,7 @@ function rememberToggled() {
 
 function hostChanged() {
   var scheme = inputHost.value.substr(0, 5);
-  if (scheme != "https") {
+  if (scheme !== "https") {
     warningHost.style.display = "table-row";
   }
   else {

