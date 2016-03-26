@@ -66,7 +66,7 @@ if (!mobile) {
 
 if (mobile) {
   var Services = require("resource://gre/modules/Services.jsm").Services;
-  var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
+  NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
 }
 
 function cleanup() {
@@ -89,6 +89,13 @@ function cleanup() {
   }
   timers.clearInterval(refreshInterval);
   passwordMiner.destroy();
+}
+
+function mainPanelLoginClicked(id) {
+  var worker = tabs.activeTab.attach({
+    contentScriptFile: self.data.url("fill-password.js")
+  });
+  worker.port.emit("fillPassword", userList[id], passwordList[id]);
 }
 
 function populateFillMenu() {
@@ -183,13 +190,6 @@ function handleMainButtonClick(state) {
     mainPanel.hide();
     settingsPanel.hide();
   }
-}
-
-function mainPanelLoginClicked(id) {
-  var worker = tabs.activeTab.attach({
-    contentScriptFile: self.data.url("fill-password.js")
-  });
-  worker.port.emit("fillPassword", userList[id], passwordList[id]);
 }
 
 function fetchLoginList() {
