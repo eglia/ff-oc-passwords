@@ -42,12 +42,12 @@ function hostChanged() {
   self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
 }
 
-function show(host, user, password, timer, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
-  inputHost.value = host;
-  inputUser.value = user;
-  inputPassword.value = password;
-  inputTimer.value = timer;
-  if (password === "") {
+function show(settings) {
+  inputHost.value = settings["databaseHost"];
+  inputUser.value = settings["databaseUser"];
+  inputPassword.value = settings["databasePassword"];
+  inputTimer.value = settings["refreshTimer"];
+  if (settings["databasePassword"] === "") {
     inputRemember.checked = false;
     warningRemember.style.display = "none";
   }
@@ -55,10 +55,10 @@ function show(host, user, password, timer, includeName, ignoreProtocol, ignoreSu
     inputRemember.checked = true;
     warningRemember.style.display = "table-row";
   }
-  inputIncludeName.checked = includeName;
-  inputIgnoreProtocol.checked = ignoreProtocol;
-  inputIgnoreSubdomain.checked = ignoreSubdomain;
-  inputIgnorePath.checked = ignorePath;
+  inputIncludeName.checked = settings["includeName"];
+  inputIgnoreProtocol.checked = settings["ignoreProtocol"];
+  inputIgnoreSubdomain.checked = settings["ignoreSubdomain"];
+  inputIgnorePath.checked = settings["ignorePath"];
   hostChanged();
 }
 

@@ -127,12 +127,12 @@ function processLoginList() {
   passwordList = [];
   var hits = 0;
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+    var entryAddress = urlProcessor.processURL(loginList[i]["address"], simplePrefs.prefs["ignoreProtocol"],
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
-      userList.push(loginList[i]["properties"]["loginname"]);
+      userList.push(loginList[i]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       hits = hits + 1;
     }
@@ -196,16 +196,26 @@ function fetchLoginList() {
   if (!mobile) {
     mainPanel.port.emit("refreshStarted");
   }
-  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
+  var database = {
+    databaseHost,
+    databaseUser,
+    databasePassword
+  }
+  api.fetchAll(database, fetchLoginListCallback);
 }
 
 function replaceLogin(data) {
-  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
-             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
-             "1");
+  var database = {
+    databaseHost,
+    databaseUser,
+    databasePassword
+  }
+  data["deleted"] = "1";
+  api.update(database, minedMatchingID, data);
   
-  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
-             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
+  data["deleted"] = "0";
+  data["pass"] = minedPassword;
+  api.create(database, data, fetchLoginList);
 }
 
 function saveSettingsPanel(host, username, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
@@ -258,12 +268,23 @@ function saveLogin() {
   if (!mobile) {
     addPanel.hide();
   }
+  var database = {
+    databaseHost,
+    databaseUser,
+    databasePassword
+  }
+  data = {
+    "loginname": minedUser,
+    "pass": minedPassword,
+    "website": urlProcessor.processURL(minedURL, true, true, true),
+    "address": minedURL,
+    "notes": ""
+  }
   if (minedMatchingID === -1) {
-    api.create(databaseHost, databaseUser, databasePassword, minedUser, minedPassword,
-               urlProcessor.processURL(minedURL, true, true, true), minedURL, "", fetchLoginList);
+    api.create(database, minedUser, data, fetchLoginList);
   }
   else {
-    api.fetchSingle(databaseHost, databaseUser, databasePassword, minedMatchingID, replaceLogin);
+    api.fetchSingle(database, minedMatchingID, replaceLogin);
   }
 }
 
@@ -278,12 +299,12 @@ function passwordMined(url, user, password) {
   var idList = [];
   var title = "";
   for (var i=0; i<loginList.length; i++) {
-    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+    var entryAddress = urlProcessor.processURL(loginList[i]["address"], simplePrefs.prefs["ignoreProtocol"],
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
                                                simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
-      userList.push(loginList[i]["properties"]["loginname"]);
+      userList.push(loginList[i]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
       idList.push(loginList[i]["id"]);
     }
@@ -380,13 +401,21 @@ function settingsPanelRefresh(credentials) {
     databaseUser = credentials[0].username;
     databasePassword = credentials[0].password;
   }
+  var settings = {
+    databaseHost,
+    databaseUser,
+    databasePassword,
+    refreshTimer,
+    includeName,
+    ignoreProtocol,
+    ignoreSubdomain,
+    ignorePath
+  };
   if (!mobile) {
-    settingsPanel.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer,
-                            includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
+    settingsPanel.port.emit("show", settings);
   }
   else {
-    settingsPanelWorker.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer,
-                                  includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
+    settingsPanelWorker.port.emit("show", settings);
   }
 }
 

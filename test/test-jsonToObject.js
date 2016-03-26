@@ -5,10 +5,10 @@ exports["testParse"] = function(assert) {
     "\'prop1\': \'propval1\', " +
     "\'prop2\": \"prop\'\"\n\t\\val2\""
   };
-  var output = {"attr": "value", "properties": {
-      "prop1": "propval1",
-      "prop2": "prop\'\"\n\t\\val2"
-    }
+  var output = {
+    "attr": "value",
+    "prop1": "propval1",
+    "prop2": "prop\'\"\n\t\\val2"
   };
   assert.ok(JSON.stringify(api.jsonToObject(input)) === JSON.stringify(output), "testParse");
 };
