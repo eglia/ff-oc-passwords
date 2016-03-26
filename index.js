@@ -33,90 +33,71 @@ if (!mobile) {
   var mainButton = new ui.ToggleButton({
     id: "owncloudPasswordButton",
     label: "ownCloud Passwords",
-    icon: "./app_black.png",
-    onChange: handleMainButtonClick
+    icon: "./app_black.png"
   });
-
   var mainPanel = new panel.Panel({
     contentURL: self.data.url("main-panel.html"),
-    contentScriptFile: self.data.url("main-panel.js"),
-    onHide: handleHide
+    contentScriptFile: self.data.url("main-panel.js")
   });
-
   var settingsPanel = new panel.Panel({
     contentURL: self.data.url("settings-panel.html"),
-    contentScriptFile: self.data.url("settings-panel.js"),
-    onHide: handleHide
+    contentScriptFile: self.data.url("settings-panel.js")
   });
-
   var addPanel = new panel.Panel({
     contentURL: self.data.url("add-panel.html"),
-    contentScriptFile: self.data.url("add-panel.js"),
-    onHide: handleHide
+    contentScriptFile: self.data.url("add-panel.js")
   });
 }
 
 if (mobile) {
   var Services = require("resource://gre/modules/Services.jsm").Services;
   var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
-  
-  var settingsPanelWorker = null;
-  var parentMenu = NativeWindow.menu.add({
-    name: "Passwords"
-  });
-  
-  function attachWorker() {
-    settingsPanelWorker = tabs.activeTab.attach({
-      contentScriptFile: "./settings-panel.js"
-    });
-    passwords.search({
-      url: self.uri,
-      onComplete: settingsPanelRefresh
-    });
-    settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
-    settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
-  }
-  
-  function menuTapHandler() {
-    tabs.open({
-      url: "./settings-panel.html",
-      onReady: attachWorker
-    });
-  }
-  
-  var settingsMenu = NativeWindow.menu.add({
-    name: "Settings",
-    parent: parentMenu,
-    callback: menuTapHandler
-  });
-  var refreshMenu = NativeWindow.menu.add({
-    name: "Refresh",
-    parent: parentMenu,
-    callback: fetchLoginList
-  });
-  var fillMenuElements = [];
-  
-  function fillMenuTapped(elem) {
-    mainPanelLoginClicked(elem);
-  }
 
-  function populateFillMenu() {
-    for (var i=0; i<fillMenuElements.length; i++) {
-      NativeWindow.menu.remove(fillMenuElements[i]);
-    }
-    fillMenuElements = [];
-    for (var i=0; i<userList.length; i++) {
-      fillMenuElements[i] = NativeWindow.menu.add({
-        name: userList[i],
-        parent: parentMenu,
-        callback: (function() {
-           var tmp = i;
-           return function() {
-             fillMenuTapped(tmp);
-           };
-        }())
-      });
-    }
+  var settingsPanelWorker = null;
+  var parentMenu = null;
+  var settingsMenu = null;
+  var refreshMenu = null;
+  var fillMenuElements = []; 
+}
+
+function attachWorker() {
+  settingsPanelWorker = tabs.activeTab.attach({
+    contentScriptFile: "./settings-panel.js"
+  });
+  passwords.search({
+    url: self.uri,
+    onComplete: settingsPanelRefresh
+  });
+  settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
+  settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
+}
+
+function menuTapHandler() {
+  tabs.open({
+    url: "./settings-panel.html",
+    onReady: attachWorker
+  });
+}
+function fillMenuTapped(elem) {
+  mainPanelLoginClicked(elem);
+}
+
+function populateFillMenu() {
+  for (var i=0; i<fillMenuElements.length; i++) {
+    NativeWindow.menu.remove(fillMenuElements[i]);
+  }
+  fillMenuElements = [];
+  for (var j=0; j<userList.length; j++) {
+    fillMenuElements[j] = NativeWindow.menu.add({
+      name: userList[j],
+      parent: parentMenu,
+      callback: (function() {
+         var tmp = j;
+         return function() {
+           fillMenuTapped(tmp);
+         };
+      }())
+    });
   }
 }
 
@@ -308,7 +289,7 @@ function fetchLoginList() {
 
 function processLoginList() {
   if (loginList === null || tabs.activeTab === null) {
-    return
+    return;
   }
   var host = urlProcessor.processURL(tabs.activeTab.url, simplePrefs.prefs["ignoreProtocol"],
                                      simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
@@ -317,9 +298,9 @@ function processLoginList() {
   var hits = 0
   for (var i=0; i<loginList.length; i++) {
     var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"])
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
     if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
       userList.push(loginList[i]["properties"]["loginname"]);
       passwordList.push(loginList[i]["pass"]);
@@ -433,6 +414,11 @@ passwordMiner = new pageMod.PageMod({
   }
 });
 
+mainButton.on("change", handleMainButtonClick);
+mainPanel.on("hide", handleHide);
+settingsPanel.on("hide", handleHide);
+addPanel.on("hide", handleHide);
+
 tabs.on("ready", processLoginList);
 tabs.on("activate", processLoginList);
 tabs.on("deactivate", processLoginList);
@@ -444,6 +430,22 @@ passwords.search({
 });
 
 refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
+
+if (mobile) {
+  parentMenu = NativeWindow.menu.add({
+    name: "Passwords"
+  });
+  settingsMenu = NativeWindow.menu.add({
+    name: "Settings",
+    parent: parentMenu,
+    callback: menuTapHandler
+  });
+  refreshMenu = NativeWindow.menu.add({
+    name: "Refresh",
+    parent: parentMenu,
+    callback: fetchLoginList
+  });
+}
 
 if (!mobile) {
   settingsPanel.port.on("saveSettings", saveSettingsPanel);

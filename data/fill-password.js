@@ -22,7 +22,7 @@ function getLoginFields() {
     };
   while (pswdLength--) {
     var curPswdField = pswd[pswdLength],
-      thisParentForm = parentForm(curPswdField)
+      thisParentForm = parentForm(curPswdField);
     if (thisParentForm) {
       var inputs = thisParentForm.getElementsByTagName("input");
       for (var i = 0; i < inputs.length; i++) {
