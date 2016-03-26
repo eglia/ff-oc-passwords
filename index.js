@@ -200,7 +200,7 @@ function fetchLoginList() {
     databaseHost,
     databaseUser,
     databasePassword
-  }
+  };
   api.fetchAll(database, fetchLoginListCallback);
 }
 
@@ -209,7 +209,7 @@ function replaceLogin(data) {
     databaseHost,
     databaseUser,
     databasePassword
-  }
+  };
   data["deleted"] = "1";
   api.update(database, minedMatchingID, data);
   
@@ -218,36 +218,36 @@ function replaceLogin(data) {
   api.create(database, data, fetchLoginList);
 }
 
-function saveSettingsPanel(host, username, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
+function saveSettingsPanel(settings) {
   if (!mobile) {
     settingsPanel.hide();
   }
   else {
     tabs.activeTab.close();
   }
-  if (host.slice(-1) === "/") {
-    host = host.slice(0, -1);
+  if (settings["databaseHost"].slice(-1) === "/") {
+    settings["databaseHost"] = settings["databaseHost"].slice(0, -1);
   }
-  simplePrefs.prefs["databaseHost"] = host;
-  simplePrefs.prefs["refreshTimer"] = parseInt(timer);
-  simplePrefs.prefs["includeName"] = includeName;
-  simplePrefs.prefs["ignoreProtocol"] = ignoreProtocol;
-  simplePrefs.prefs["ignoreSubdomain"] = ignoreSubdomain;
-  simplePrefs.prefs["ignorePath"] = ignorePath;
+  simplePrefs.prefs["databaseHost"] = settings["databaseHost"];
+  simplePrefs.prefs["refreshTimer"] = parseInt(settings["refreshTimer"]);
+  simplePrefs.prefs["includeName"] = settings["includeName"];
+  simplePrefs.prefs["ignoreProtocol"] = settings["ignoreProtocol"];
+  simplePrefs.prefs["ignoreSubdomain"] = settings["ignoreSubdomain"];
+  simplePrefs.prefs["ignorePath"] = settings["ignorePath"];
   passwords.search({
     realm: "ownCloud",
     onComplete: function onComplete(credentials) {
       credentials.forEach(passwords.remove);
-      if (remember) {
+      if (settings["rememberLogin"]) {
         passwords.store({
           realm: "ownCloud",
-          username,
-          password
+          username: settings["databaseUser"],
+          password: settings["databasePassword"]
         });
       }
-      databaseHost = host;
-      databaseUser = username;
-      databasePassword = password;
+      databaseHost = settings["databaseHost"];
+      databaseUser = settings["databaseUser"];
+      databasePassword = settings["databasePassword"];
       fetchLoginList();
       timers.clearInterval(refreshInterval);
       refreshInterval = timers.setInterval(fetchLoginList, simplePrefs.prefs["refreshTimer"]*1000);
@@ -272,14 +272,14 @@ function saveLogin() {
     databaseHost,
     databaseUser,
     databasePassword
-  }
-  data = {
+  };
+  var data = {
     "loginname": minedUser,
     "pass": minedPassword,
     "website": urlProcessor.processURL(minedURL, true, true, true),
     "address": minedURL,
     "notes": ""
-  }
+  };
   if (minedMatchingID === -1) {
     api.create(database, minedUser, data, fetchLoginList);
   }

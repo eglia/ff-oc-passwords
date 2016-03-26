@@ -13,8 +13,18 @@ var warningRemember = document.getElementById("rememberWarning");
 var warningHost = document.getElementById("hostWarning");
 
 function saveSettings() {
-  self.port.emit("saveSettings", inputHost.value, inputUser.value, inputPassword.value, inputTimer.value, inputRemember.checked,
-                 inputIncludeName.checked, inputIgnoreProtocol.checked, inputIgnoreSubdomain.checked, inputIgnorePath.checked);
+  var settings = {
+    "databaseHost": inputHost.value,
+    "databaseUser": inputUser.value,
+    "databasePassword": inputPassword.value,
+    "refreshTimer": inputTimer.value,
+    "rememberLogin": inputRemember.checked,
+    "includeName": inputIncludeName.checked,
+    "ignoreProtocol": inputIgnoreProtocol.checked,
+    "ignoreSubdomain": inputIgnoreSubdomain.checked,
+    "ignorePath": inputIgnorePath.checked
+  };
+  self.port.emit("saveSettings", settings);
 }
 
 function cancelSettings() {
