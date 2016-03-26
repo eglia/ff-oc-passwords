@@ -414,11 +414,6 @@ passwordMiner = new pageMod.PageMod({
   }
 });
 
-mainButton.on("change", handleMainButtonClick);
-mainPanel.on("hide", handleHide);
-settingsPanel.on("hide", handleHide);
-addPanel.on("hide", handleHide);
-
 tabs.on("ready", processLoginList);
 tabs.on("activate", processLoginList);
 tabs.on("deactivate", processLoginList);
@@ -448,6 +443,10 @@ if (mobile) {
 }
 
 if (!mobile) {
+  mainButton.on("change", handleMainButtonClick);
+  mainPanel.on("hide", handleHide);
+  settingsPanel.on("hide", handleHide);
+  addPanel.on("hide", handleHide);
   settingsPanel.port.on("saveSettings", saveSettingsPanel);
   settingsPanel.port.on("cancelSettings", cancelSettingsPanel);
   mainPanel.port.on("loginClicked", mainPanelLoginClicked);
