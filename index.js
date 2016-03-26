@@ -60,45 +60,11 @@ if (mobile) {
   var fillMenuElements = []; 
 }
 
-function attachWorker() {
-  settingsPanelWorker = tabs.activeTab.attach({
-    contentScriptFile: "./settings-panel.js"
-  });
-  passwords.search({
-    url: self.uri,
-    onComplete: settingsPanelRefresh
-  });
-  settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
-  settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
-}
-
 function menuTapHandler() {
   tabs.open({
     url: "./settings-panel.html",
     onReady: attachWorker
   });
-}
-function fillMenuTapped(elem) {
-  mainPanelLoginClicked(elem);
-}
-
-function populateFillMenu() {
-  for (var i=0; i<fillMenuElements.length; i++) {
-    NativeWindow.menu.remove(fillMenuElements[i]);
-  }
-  fillMenuElements = [];
-  for (var j=0; j<userList.length; j++) {
-    fillMenuElements[j] = NativeWindow.menu.add({
-      name: userList[j],
-      parent: parentMenu,
-      callback: (function() {
-         var tmp = j;
-         return function() {
-           fillMenuTapped(tmp);
-         };
-      }())
-    });
-  }
 }
 
 function cleanup() {
@@ -123,91 +89,13 @@ function cleanup() {
   passwordMiner.destroy();
 }
 
-function passwordMined(url, user, password) {
-  if (loginList === null) {
-    return;
-  }
-  var host = urlProcessor.processURL(url, simplePrefs.prefs["ignoreProtocol"],
-                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-  var userList = [];
-  var passwordList = [];
-  var idList = [];
-  var title = "";
-  for (var i=0; i<loginList.length; i++) {
-    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
-      userList.push(loginList[i]["properties"]["loginname"]);
-      passwordList.push(loginList[i]["pass"]);
-      idList.push(loginList[i]["id"]);
-    }
-  }
-  minedMatchingID = -1;
-  title = "Detected new login:";
-  for (var i=0; i<userList.length; i++) {
-    if (userList[i] === user) {
-      if (passwordList[i] != password) {
-        minedMatchingID = idList[i];
-        title = "Detected changed password for user:";
-      }
-      else {
-        return;
-      }
-    }
-  }
-  minedURL = url;
-  minedUser = user;
-  minedPassword = password;
-  if (!mobile) {
-    mainButton.state("window", {checked: true});
-    addPanel.show({position: mainButton});
-    addPanel.port.emit("show", title, user);
-  }
-  else {
-    var buttons = [{
-        "label": "Save",
-        "callback": saveLogin,
-        "positive": true
-      },{
-        "label": "Cancel",
-        "callback": cancelLogin,
-        "positive": false
-      }];
-    NativeWindow.doorhanger.show(title + " " + user + "<br>Save to database?", "saveDialog", buttons, tabs.activeTab.id);
-  }
-}
-
-function saveLogin() {
-  if (!mobile) {
-    addPanel.hide();
-  }
-  if (minedMatchingID === -1) {
-    api.create(databaseHost, databaseUser, databasePassword, minedUser, minedPassword,
-               urlProcessor.processURL(minedURL, true, true, true), minedURL, "", fetchLoginList);
-  }
-  else {
-    api.fetchSingle(databaseHost, databaseUser, databasePassword, minedMatchingID, replaceLogin);
-  }
-}
-
-function replaceLogin(data) {
-  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
-             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
-             "1");
-  
-  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
-             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
-}
-
 function cancelLogin() {
   if (!mobile) {
     addPanel.hide();
   }
 }
 
-function saveSettingsPanel(host, user, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
+function saveSettingsPanel(host, username, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
   if (!mobile) {
     settingsPanel.hide();
   }
@@ -230,12 +118,12 @@ function saveSettingsPanel(host, user, password, timer, remember, includeName, i
       if (remember) {
         passwords.store({
           realm: "ownCloud",
-          username: user,
-          password: password
+          username,
+          password
         });
       }
       databaseHost = host;
-      databaseUser = user;
+      databaseUser = username;
       databasePassword = password;
       fetchLoginList();
       timers.clearInterval(refreshInterval);
@@ -271,6 +159,22 @@ function handleMainButtonClick(state) {
   }
 }
 
+function fetchLoginList() {
+  if (!mobile) {
+    mainPanel.port.emit("refreshStarted");
+  }
+  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
+}
+
+function replaceLogin(data) {
+  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
+             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
+             "1");
+  
+  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
+             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
+}
+
 function processCredentials(credentials) {
   databaseHost = simplePrefs.prefs["databaseHost"];
   if (credentials.length > 0) {
@@ -280,11 +184,75 @@ function processCredentials(credentials) {
   }
 }
 
-function fetchLoginList() {
+function saveLogin() {
   if (!mobile) {
-    mainPanel.port.emit("refreshStarted");
+    addPanel.hide();
   }
-  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
+  if (minedMatchingID === -1) {
+    api.create(databaseHost, databaseUser, databasePassword, minedUser, minedPassword,
+               urlProcessor.processURL(minedURL, true, true, true), minedURL, "", fetchLoginList);
+  }
+  else {
+    api.fetchSingle(databaseHost, databaseUser, databasePassword, minedMatchingID, replaceLogin);
+  }
+}
+
+
+
+function passwordMined(url, user, password) {
+  if (loginList === null) {
+    return;
+  }
+  var host = urlProcessor.processURL(url, simplePrefs.prefs["ignoreProtocol"],
+                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+  var userList = [];
+  var passwordList = [];
+  var idList = [];
+  var title = "";
+  for (var i=0; i<loginList.length; i++) {
+    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
+      userList.push(loginList[i]["properties"]["loginname"]);
+      passwordList.push(loginList[i]["pass"]);
+      idList.push(loginList[i]["id"]);
+    }
+  }
+  minedMatchingID = -1;
+  title = "Detected new login:";
+  for (var j=0; j<userList.length; j++) {
+    if (userList[j] === user) {
+      if (passwordList[j] !== password) {
+        minedMatchingID = idList[j];
+        title = "Detected changed password for user:";
+      }
+      else {
+        return;
+      }
+    }
+  }
+  minedURL = url;
+  minedUser = user;
+  minedPassword = password;
+  if (!mobile) {
+    mainButton.state("window", {checked: true});
+    addPanel.show({position: mainButton});
+    addPanel.port.emit("show", title, user);
+  }
+  else {
+    var buttons = [{
+        "label": "Save",
+        "callback": saveLogin,
+        "positive": true
+      },{
+        "label": "Cancel",
+        "callback": cancelLogin,
+        "positive": false
+      }];
+    NativeWindow.doorhanger.show(title + " " + user + "<br>Save to database?", "saveDialog", buttons, tabs.activeTab.id);
+  }
 }
 
 function processLoginList() {
@@ -346,6 +314,25 @@ function mainPanelCopyClicked(id) {
   clipBoardCountdownTimer = timers.setTimeout(clearClipboardCountdown, 1000);
 }
 
+function populateFillMenu() {
+  for (var i=0; i<fillMenuElements.length; i++) {
+    NativeWindow.menu.remove(fillMenuElements[i]);
+  }
+  fillMenuElements = [];
+  for (var j=0; j<userList.length; j++) {
+    fillMenuElements[j] = NativeWindow.menu.add({
+      name: userList[j],
+      parent: parentMenu,
+      callback: (function() {
+         var tmp = j;
+         return function() {
+           mainPanelLoginClicked(tmp);
+         };
+      }())
+    });
+  }
+}
+
 function clearClipboardCountdown() {
   clipBoardCountdown -= 1;
   mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
@@ -401,6 +388,18 @@ function settingsPanelRefresh(credentials) {
     settingsPanelWorker.port.emit("show", databaseHost, databaseUser, databasePassword, refreshTimer,
                                   includeName, ignoreProtocol, ignoreSubdomain, ignorePath);
   }
+}
+
+function attachWorker() {
+  settingsPanelWorker = tabs.activeTab.attach({
+    contentScriptFile: "./settings-panel.js"
+  });
+  passwords.search({
+    url: self.uri,
+    onComplete: settingsPanelRefresh
+  });
+  settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
+  settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
 }
 
 exports.onUnload = cleanup;
