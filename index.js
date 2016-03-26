@@ -25,25 +25,40 @@ var passwordMiner = null;
 var clipBoardCountdown = 0;
 var clipBoardCountdownTimer = null;
 
-if (!mobile) {
-  var ui = require("sdk/ui");
-  var panel = require("sdk/panel");
-  var clipboard = require("sdk/clipboard");
+var ui = null;
+var panel = null;
+var clipboard = null;
+var mainButton = null;
+var mainPanel = null;
+var settingsPanel = null;
+var addPanel = null;
 
-  var mainButton = new ui.ToggleButton({
+var NativeWindow = null;
+var settingsPanelWorker = null;
+var parentMenu = null;
+var settingsMenu = null;
+var refreshMenu = null;
+var fillMenuElements = [];
+
+if (!mobile) {
+  ui = require("sdk/ui");
+  panel = require("sdk/panel");
+  clipboard = require("sdk/clipboard");
+
+  mainButton = new ui.ToggleButton({
     id: "owncloudPasswordButton",
     label: "ownCloud Passwords",
     icon: "./app_black.png"
   });
-  var mainPanel = new panel.Panel({
+  mainPanel = new panel.Panel({
     contentURL: self.data.url("main-panel.html"),
     contentScriptFile: self.data.url("main-panel.js")
   });
-  var settingsPanel = new panel.Panel({
+  settingsPanel = new panel.Panel({
     contentURL: self.data.url("settings-panel.html"),
     contentScriptFile: self.data.url("settings-panel.js")
   });
-  var addPanel = new panel.Panel({
+  addPanel = new panel.Panel({
     contentURL: self.data.url("add-panel.html"),
     contentScriptFile: self.data.url("add-panel.js")
   });
@@ -52,12 +67,6 @@ if (!mobile) {
 if (mobile) {
   var Services = require("resource://gre/modules/Services.jsm").Services;
   var NativeWindow = Services.wm.getMostRecentWindow("navigator:browser").NativeWindow;
-
-  var settingsPanelWorker = null;
-  var parentMenu = null;
-  var settingsMenu = null;
-  var refreshMenu = null;
-  var fillMenuElements = []; 
 }
 
 function cleanup() {
@@ -365,8 +374,8 @@ function settingsPanelRefresh(credentials) {
   var ignoreProtocol = simplePrefs.prefs["ignoreProtocol"];
   var ignoreSubdomain = simplePrefs.prefs["ignoreSubdomain"];
   var ignorePath = simplePrefs.prefs["ignorePath"];
-  var databaseUser = ""
-  var databasePassword = ""
+  var databaseUser = "";
+  var databasePassword = "";
   if (credentials.length > 0) {
     databaseUser = credentials[0].username;
     databasePassword = credentials[0].password;
