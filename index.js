@@ -282,7 +282,7 @@ function saveLogin() {
     "notes": ""
   };
   if (minedMatchingID === -1) {
-    api.create(database, minedUser, data, fetchLoginList);
+    api.create(database, data, fetchLoginList);
   }
   else {
     api.fetchSingle(database, minedMatchingID, replaceLogin);
