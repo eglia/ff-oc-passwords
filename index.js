@@ -60,13 +60,6 @@ if (mobile) {
   var fillMenuElements = []; 
 }
 
-function menuTapHandler() {
-  tabs.open({
-    url: "./settings-panel.html",
-    onReady: attachWorker
-  });
-}
-
 function cleanup() {
   if (!mobile) {
     mainButton.destroy();
@@ -89,10 +82,121 @@ function cleanup() {
   passwordMiner.destroy();
 }
 
+function populateFillMenu() {
+  for (var i=0; i<fillMenuElements.length; i++) {
+    NativeWindow.menu.remove(fillMenuElements[i]);
+  }
+  fillMenuElements = [];
+  for (var j=0; j<userList.length; j++) {
+    fillMenuElements[j] = NativeWindow.menu.add({
+      name: userList[j],
+      parent: parentMenu,
+      callback: (function() {
+         var tmp = j;
+         return function() {
+           mainPanelLoginClicked(tmp);
+         };
+      }())
+    });
+  }
+}
+
+function processLoginList() {
+  if (loginList === null || tabs.activeTab === null) {
+    return;
+  }
+  var host = urlProcessor.processURL(tabs.activeTab.url, simplePrefs.prefs["ignoreProtocol"],
+                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+  userList = [];
+  passwordList = [];
+  var hits = 0;
+  for (var i=0; i<loginList.length; i++) {
+    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
+                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
+    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
+      userList.push(loginList[i]["properties"]["loginname"]);
+      passwordList.push(loginList[i]["pass"]);
+      hits = hits + 1;
+    }
+  }
+  if (!mobile) {
+    mainPanel.port.emit("updateLogins", userList, loginList.length);
+    if (hits > 0) {
+      mainButton.badge = hits;
+    }
+    else {
+      mainButton.badge = null;
+    }
+  }
+  if (mobile) {
+    populateFillMenu();
+  }
+}
+
+function fetchLoginListCallback(value) {
+  if (!mobile) {
+    mainPanel.port.emit("refreshFinished");
+  }
+  loginList = value;
+  processLoginList();
+}
+
 function cancelLogin() {
   if (!mobile) {
     addPanel.hide();
   }
+}
+
+function cancelSettingsPanel() {
+  if (!mobile) {
+    settingsPanel.hide();
+  }
+  else {
+    tabs.activeTab.close();
+  }
+}
+
+function handleHide() {
+  mainButton.state("window", {checked: false});
+}
+
+function handleMainButtonClick(state) {
+  if (state.checked === true) {
+    if (databaseUser === null || databasePassword === null) {
+      settingsPanel.show({position: mainButton});
+    } else {
+      mainPanel.show({position: mainButton});
+    }
+  }
+  else {
+    mainPanel.hide();
+    settingsPanel.hide();
+  }
+}
+
+function mainPanelLoginClicked(id) {
+  var worker = tabs.activeTab.attach({
+    contentScriptFile: self.data.url("fill-password.js")
+  });
+  worker.port.emit("fillPassword", userList[id], passwordList[id]);
+}
+
+function fetchLoginList() {
+  if (!mobile) {
+    mainPanel.port.emit("refreshStarted");
+  }
+  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
+}
+
+function replaceLogin(data) {
+  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
+             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
+             "1");
+  
+  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
+             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
 }
 
 function saveSettingsPanel(host, username, password, timer, remember, includeName, ignoreProtocol, ignoreSubdomain, ignorePath) {
@@ -132,49 +236,6 @@ function saveSettingsPanel(host, username, password, timer, remember, includeNam
   });
 }
 
-function cancelSettingsPanel() {
-  if (!mobile) {
-    settingsPanel.hide();
-  }
-  else {
-    tabs.activeTab.close();
-  }
-}
-
-function handleHide() {
-  mainButton.state("window", {checked: false});
-}
-
-function handleMainButtonClick(state) {
-  if (state.checked === true) {
-    if (databaseUser === null || databasePassword === null) {
-      settingsPanel.show({position: mainButton});
-    } else {
-      mainPanel.show({position: mainButton});
-    }
-  }
-  else {
-    mainPanel.hide();
-    settingsPanel.hide()
-  }
-}
-
-function fetchLoginList() {
-  if (!mobile) {
-    mainPanel.port.emit("refreshStarted");
-  }
-  api.fetchAll(databaseHost, databaseUser, databasePassword, fetchLoginListCallback);
-}
-
-function replaceLogin(data) {
-  api.update(databaseHost, databaseUser, databasePassword, minedMatchingID, data["properties"]["loginname"], data["pass"],
-             data["website"], data["properties"]["address"], data["properties"]["notes"], data["properties"]["datechanged"],
-             "1");
-  
-  api.create(databaseHost, databaseUser, databasePassword, data["properties"]["loginname"], minedPassword,
-             data["website"], data["properties"]["address"], data["properties"]["notes"], fetchLoginList);
-}
-
 function processCredentials(credentials) {
   databaseHost = simplePrefs.prefs["databaseHost"];
   if (credentials.length > 0) {
@@ -196,8 +257,6 @@ function saveLogin() {
     api.fetchSingle(databaseHost, databaseUser, databasePassword, minedMatchingID, replaceLogin);
   }
 }
-
-
 
 function passwordMined(url, user, password) {
   if (loginList === null) {
@@ -255,84 +314,6 @@ function passwordMined(url, user, password) {
   }
 }
 
-function processLoginList() {
-  if (loginList === null || tabs.activeTab === null) {
-    return;
-  }
-  var host = urlProcessor.processURL(tabs.activeTab.url, simplePrefs.prefs["ignoreProtocol"],
-                                     simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-  userList = [];
-  passwordList = [];
-  var hits = 0
-  for (var i=0; i<loginList.length; i++) {
-    var entryAddress = urlProcessor.processURL(loginList[i]["properties"]["address"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-    var entryWebsite = urlProcessor.processURL(loginList[i]["website"], simplePrefs.prefs["ignoreProtocol"],
-                                               simplePrefs.prefs["ignoreSubdomain"], simplePrefs.prefs["ignorePath"]);
-    if (host === entryAddress || simplePrefs.prefs["includeName"] && host === entryWebsite) {
-      userList.push(loginList[i]["properties"]["loginname"]);
-      passwordList.push(loginList[i]["pass"]);
-      hits = hits + 1;
-    }
-  }
-  if (!mobile) {
-    mainPanel.port.emit("updateLogins", userList, loginList.length);
-    if (hits > 0) {
-      mainButton.badge = hits;
-    }
-    else {
-      mainButton.badge = undefined;
-    }
-  }
-  if (mobile) {
-    populateFillMenu();
-  }
-}
-
-function fetchLoginListCallback(value) {
-  if (!mobile) {
-    mainPanel.port.emit("refreshFinished");
-  }
-  loginList = value;
-  processLoginList();
-}
-
-function mainPanelLoginClicked(id) {
-  var worker = tabs.activeTab.attach({
-    contentScriptFile: self.data.url("fill-password.js")
-  });
-  worker.port.emit("fillPassword", userList[id], passwordList[id]);
-}
-
-function mainPanelCopyClicked(id) {
-  if (clipBoardCountdownTimer != null) {
-    timers.clearTimeout(clipBoardCountdownTimer);
-  }
-  clipboard.set(passwordList[id]);
-  clipBoardCountdown = 10;
-  mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
-  clipBoardCountdownTimer = timers.setTimeout(clearClipboardCountdown, 1000);
-}
-
-function populateFillMenu() {
-  for (var i=0; i<fillMenuElements.length; i++) {
-    NativeWindow.menu.remove(fillMenuElements[i]);
-  }
-  fillMenuElements = [];
-  for (var j=0; j<userList.length; j++) {
-    fillMenuElements[j] = NativeWindow.menu.add({
-      name: userList[j],
-      parent: parentMenu,
-      callback: (function() {
-         var tmp = j;
-         return function() {
-           mainPanelLoginClicked(tmp);
-         };
-      }())
-    });
-  }
-}
-
 function clearClipboardCountdown() {
   clipBoardCountdown -= 1;
   mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
@@ -345,9 +326,19 @@ function clearClipboardCountdown() {
   }
 }
 
+function mainPanelCopyClicked(id) {
+  if (clipBoardCountdownTimer != null) {
+    timers.clearTimeout(clipBoardCountdownTimer);
+  }
+  clipboard.set(passwordList[id]);
+  clipBoardCountdown = 10;
+  mainPanel.port.emit("clipBoardCountdown", clipBoardCountdown);
+  clipBoardCountdownTimer = timers.setTimeout(clearClipboardCountdown, 1000);
+}
+
 function mainPanelSettingsClicked() {
   mainPanel.hide();
-  mainButton.state("window", {checked: true})
+  mainButton.state("window", {checked: true});
   settingsPanel.show({position: mainButton});
 }
 
@@ -400,6 +391,13 @@ function attachWorker() {
   });
   settingsPanelWorker.port.on("saveSettings", saveSettingsPanel);
   settingsPanelWorker.port.on("cancelSettings", cancelSettingsPanel);
+}
+
+function menuTapHandler() {
+  tabs.open({
+    url: "./settings-panel.html",
+    onReady: attachWorker
+  });
 }
 
 exports.onUnload = cleanup;
