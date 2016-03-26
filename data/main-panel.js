@@ -32,7 +32,7 @@ function createClickHandler(event, element) {
     }
     self.port.emit(event, element.name);
   };
-};
+}
 
 function updateLogins(logins, numTotalLogins) {
   while (divLogins.firstChild) {

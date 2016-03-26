@@ -25,4 +25,9 @@ exports["testStripAll"] = function(assert) {
                                     "example.co.uk", "testStripAll");
 };
 
+exports["testFileURI"] = function(assert) {
+  assert.ok(urlProcessor.processURL("file:///path/to/file.html", true, true, true) ===
+                                    "file:///path/to/file.html", "testFileURI");
+};
+
 require("sdk/test").run(exports);

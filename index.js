@@ -98,6 +98,12 @@ function mainPanelLoginClicked(id) {
   worker.port.emit("fillPassword", userList[id], passwordList[id]);
 }
 
+function createCallback(callback, arg) {
+  return function() {
+   callback(arg);
+  };
+}
+
 function populateFillMenu() {
   for (var i=0; i<fillMenuElements.length; i++) {
     NativeWindow.menu.remove(fillMenuElements[i]);
@@ -107,12 +113,7 @@ function populateFillMenu() {
     fillMenuElements[j] = NativeWindow.menu.add({
       name: userList[j],
       parent: parentMenu,
-      callback: (function() {
-         var tmp = j;
-         return function() {
-           mainPanelLoginClicked(tmp);
-         };
-      }())
+      callback: createCallback(mainPanelLoginClicked, j)
     });
   }
 }

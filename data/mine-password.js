@@ -46,14 +46,15 @@ function formSubmitted(id) {
   }
 }
 
+function createCallback(callback, arg){
+  return function() {
+    callback(arg);
+  };
+}
+
 forms = getLoginFields();
 
 for (var i=0; i<forms.length; i++) {
-  forms[i][0].addEventListener("submit", (function(){
-    var tmp = i;
-    return function() {
-      formSubmitted(tmp);
-    };
-  }()));
+  forms[i][0].addEventListener("submit", createCallback(formSubmitted, i));
 }
 
