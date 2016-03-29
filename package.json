@@ -52,5 +52,9 @@
     "type": "bool",
     "value": true,
     "hidden": true
-  }]
+  }],
+  "permissions": {
+    "multiprocess": true,
+    "private-browsing": true
+  }
 }
