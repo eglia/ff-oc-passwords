@@ -1,4 +1,9 @@
 ## Changelog
+### 0.3.1
+- Added private browsing support
+- Added multiprocess firefox support
+- Improved version detection ([#10](https://github.com/eglia/ff-oc-passwords/issues/10))
+
 ### 0.3.0
 - Added functionality to detect submitted password forms and save them to the database ([#6](https://github.com/eglia/ff-oc-passwords/issues/6))
 - Added functionality to copy passwords to clipboard ([#7](https://github.com/eglia/ff-oc-passwords/issues/7))
