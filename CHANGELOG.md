@@ -2,6 +2,7 @@
 ### 0.3.2 (unreleased)
 - fixed character encoding for all panels
 - added timeout of 5s to API calls
+- added error messages for failed requests
 
 ### 0.3.1
 - Added private browsing support
