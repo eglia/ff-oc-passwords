@@ -1,5 +1,5 @@
 ## Changelog
-### 0.3.2 (unreleased)
+### 0.3.2
 - fixed character encoding for all panels
 - added timeout of 5s to API calls
 - added error messages for failed requests
