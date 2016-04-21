@@ -4,6 +4,14 @@ var divLogins = document.getElementById("divLogins");
 var textTotalLogins = document.getElementById("textTotalLogins");
 var lastClickedCopyButton = null;
 
+function resizeInit() {
+  self.port.emit("resize", -1, -1);
+}
+
+function resize() {
+  self.port.emit("resize", document.documentElement.scrollWidth + 10, document.documentElement.scrollHeight + 10);
+}
+
 function buttonSettingsClick() {
   self.port.emit("settingsClicked");
 }
@@ -76,11 +84,11 @@ function updateLogins(logins, numTotalLogins) {
   textTotalLogins.removeChild(textTotalLogins.firstChild);
   var t = document.createTextNode(numTotalLogins + " logins in database");
   textTotalLogins.appendChild(t);
-  self.port.emit("resize", document.documentElement.clientWidth, document.documentElement.clientHeight);
+  resizeInit();
 }
 
 function show() {
-  self.port.emit("resize", document.documentElement.clientWidth, document.documentElement.clientHeight);
+  resizeInit();
 }
 
 function clipBoardCountdown(count) {
@@ -99,4 +107,5 @@ self.port.on("refreshFinished", refreshFinished);
 self.port.on("updateLogins", updateLogins);
 self.port.on("clipBoardCountdown", clipBoardCountdown);
 self.port.on("show", show);
+self.port.on("resize", resize);
 

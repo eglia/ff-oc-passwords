@@ -32,6 +32,9 @@ var mainButton = null;
 var mainPanel = null;
 var settingsPanel = null;
 var addPanel = null;
+var mainPanelMinSize = [350, 100];
+var settingsPanelMinSize = [350, 300];
+var addPanelMinSize = [200, 50];
 
 var NativeWindow = null;
 var settingsPanelWorker = null;
@@ -182,7 +185,7 @@ function handleHide() {
 function handleMainButtonClick(state) {
   if (state.checked === true) {
     if (databaseUser === null || databasePassword === null) {
-      settingsPanel.show({position: mainButton});
+      settingsPanel.show({position: mainButton, width: settingsPanelMinSize[0], height: settingsPanelMinSize[1]});
     } else {
       mainPanel.show({position: mainButton});
     }
@@ -370,7 +373,7 @@ function mainPanelCopyClicked(id) {
 function mainPanelSettingsClicked() {
   mainPanel.hide();
   mainButton.state("window", {checked: true});
-  settingsPanel.show({position: mainButton});
+  settingsPanel.show({position: mainButton, width: settingsPanelMinSize[0], height: settingsPanelMinSize[1]});
 }
 
 function mainPanelRefreshClicked() {
@@ -378,15 +381,33 @@ function mainPanelRefreshClicked() {
 }
 
 function mainPanelResize(width, height) {
-  mainPanel.resize(width, height);
+  if (width == -1 && height == -1) {
+    mainPanel.resize(mainPanelMinSize[0], mainPanelMinSize[1]);
+    mainPanel.port.emit("resize");
+  }
+  else {
+    mainPanel.resize(Math.max(mainPanelMinSize[0], width), Math.max(mainPanelMinSize[1], height));
+  }
 }
 
 function settingsPanelResize(width, height) {
-  settingsPanel.resize(width, height);
+  if (width == -1 && height == -1) {
+    settingsPanel.resize(settingsPanelMinSize[0], settingsPanelMinSize[1]);
+    settingsPanel.port.emit("resize");
+  }
+  else {
+    settingsPanel.resize(Math.max(settingsPanelMinSize[0], width), Math.max(settingsPanelMinSize[1], height));
+  }
 }
 
 function addPanelResize(width, height) {
-  addPanel.resize(width, height);
+  if (width == -1 && height == -1) {
+    addPanel.resize(addPanelMinSize[0], addPanelMinSize[1]);
+    addPanel.port.emit("resize");
+  }
+  else {
+    addPanel.resize(Math.max(addPanelMinSize[0], width), Math.max(addPanelMinSize[1], height));
+  }
 }
 
 function settingsPanelRefresh(credentials) {

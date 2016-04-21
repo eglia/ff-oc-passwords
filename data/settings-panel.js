@@ -31,6 +31,14 @@ function cancelSettings() {
   self.port.emit("cancelSettings");
 }
 
+function resizeInit() {
+  self.port.emit("resize", -1, -1);
+}
+
+function resize() {
+  self.port.emit("resize", document.documentElement.scrollWidth + 10, document.documentElement.scrollHeight + 10);
+}
+
 function rememberToggled() {
   if (inputRemember.checked) {
     warningRemember.style.display = "table-row";
@@ -38,7 +46,7 @@ function rememberToggled() {
   else {
     warningRemember.style.display = "none";
   }
-  self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
+  resizeInit();
 }
 
 function hostChanged() {
@@ -49,7 +57,7 @@ function hostChanged() {
   else {
     warningHost.style.display = "none";
   }
-  self.port.emit("resize", window.innerWidth, document.documentElement.clientHeight);
+  resizeInit();
 }
 
 function show(settings) {
@@ -73,6 +81,7 @@ function show(settings) {
 }
 
 self.port.on("show", show);
+self.port.on("resize", resize);
 inputSave.addEventListener("click", saveSettings);
 inputCancel.addEventListener("click", cancelSettings);
 inputRemember.addEventListener("change", rememberToggled);
