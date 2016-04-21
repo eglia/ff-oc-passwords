@@ -1,6 +1,6 @@
 ## Changelog
 ### 0.3.3
-- improved panel size handling ([#14](https://github.com/eglia/ff-oc-passwords/issues/14)
+- improved panel size handling ([#14](https://github.com/eglia/ff-oc-passwords/issues/14))
 
 ### 0.3.2
 - fixed character encoding for all panels
