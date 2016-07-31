@@ -1,6 +1,7 @@
 ## Changelog
 ### 0.3.4
 - Increased minimal Firefox version to 38 ([#18](https://github.com/eglia/ff-oc-passwords/issues/18))
+- Fixed malfunction with partially corrupted database ([fcturner/passwords/#242](https://github.com/fcturner/passwords/issues/242))
 
 ### 0.3.3
 - improved panel size handling ([#14](https://github.com/eglia/ff-oc-passwords/issues/14))
