@@ -1,6 +1,7 @@
 ## Changelog
 ### 0.3.5
 - Fix for newer App versions reporting the deleted flag as boolean
+- Increased timeout for all API calls to 30s
 
 ### 0.3.4
 - Increased minimal Firefox version to 38 ([#18](https://github.com/eglia/ff-oc-passwords/issues/18))
