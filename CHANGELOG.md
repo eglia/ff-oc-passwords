@@ -1,4 +1,7 @@
 ## Changelog
+### 0.3.5
+- Fix for newer App versions reporting the deleted flag as boolean
+
 ### 0.3.4
 - Increased minimal Firefox version to 38 ([#18](https://github.com/eglia/ff-oc-passwords/issues/18))
 - Fixed malfunction with partially corrupted database ([fcturner/passwords/#242](https://github.com/fcturner/passwords/issues/242))
