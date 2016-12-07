@@ -1,4 +1,7 @@
 ## Changelog
+### 0.3.6
+- perform additional sanity check on data received from server
+
 ### 0.3.5
 - Fix for newer App versions reporting the deleted flag as boolean
 - Increased timeout for all API calls to 30s
