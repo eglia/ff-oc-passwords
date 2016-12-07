@@ -1,5 +1,5 @@
 ## Changelog
-### 0.3.6
+### 0.3.7
 - perform additional sanity check on data received from server
 
 ### 0.3.5
