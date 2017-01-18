@@ -9,6 +9,7 @@ var inputIncludeName = document.getElementById("includeName");
 var inputIgnoreProtocol = document.getElementById("ignoreProtocol");
 var inputIgnoreSubdomain = document.getElementById("ignoreSubdomain");
 var inputIgnorePath = document.getElementById("ignorePath");
+var inputAutofillMobile = document.getElementById("autofillMobile");
 var warningRemember = document.getElementById("rememberWarning");
 var warningHost = document.getElementById("hostWarning");
 
@@ -22,7 +23,8 @@ function saveSettings() {
     "includeName": inputIncludeName.checked,
     "ignoreProtocol": inputIgnoreProtocol.checked,
     "ignoreSubdomain": inputIgnoreSubdomain.checked,
-    "ignorePath": inputIgnorePath.checked
+    "ignorePath": inputIgnorePath.checked,
+    "autofillMobile": inputAutofillMobile.checked
   };
   self.port.emit("saveSettings", settings);
 }
