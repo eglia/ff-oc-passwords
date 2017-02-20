@@ -1,4 +1,7 @@
 ## Changelog
+### 0.3.8
+- Fix for newer App versions returning a javascript object instead of an array
+
 ### 0.3.7
 - perform additional sanity check on data received from server
 
