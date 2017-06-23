@@ -1,5 +1,12 @@
 # Firefox + ownCloud Passwords
-#### 2016, Andreas Egli
+#### 2016-2017, Andreas Egli
+
+---
+
+# No longer maintained!
+Starting with nextCloud version 12, the passwords app [no longer supports nextCloud](https://github.com/fcturner/passwords/issues/323). As I am a nextCloud user myself, I was unfortunately forced to stop using the passwords app. Therefore, I have no more need for this Firefox extension and will no longer maintain this repository.
+
+---
 
 ## Summary
 A Firefox add-on to access passwords stored in an ownCloud.
