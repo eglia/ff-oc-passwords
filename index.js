@@ -152,6 +152,13 @@ function processLoginList() {
   }
   if (mobile) {
     populateFillMenu();
+
+    if(simplePrefs.prefs["autofillMobile"]){
+      var worker = tabs.activeTab.attach({
+	    contentScriptFile: self.data.url("fill-password.js")
+      });
+	  worker.port.emit("fillPassword", userList[0], passwordList[0]);
+    }
   }
 }
 
